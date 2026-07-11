@@ -1,1 +1,71 @@
 """Pydantic schemas: LLM-facing response models and domain models."""
+
+from llm_engine.schemas.assessment import (
+    Assessment,
+    AssessmentLLMResponse,
+    Difficulty,
+    LLMQuestion,
+    LLMQuestionOption,
+    OptionID,
+    Question,
+    QuestionOption,
+    UserAnswer,
+)
+from llm_engine.schemas.grading import (
+    DomainQualitativeNote,
+    DomainScore,
+    GradedAssessment,
+    GradingDiagnosis,
+    KnowledgeGap,
+    Proficiency,
+    QuestionResult,
+    Severity,
+)
+from llm_engine.schemas.roadmap import (
+    LLMRoadmapItem,
+    LLMSkippedDomain,
+    LLMStudyWeek,
+    Roadmap,
+    RoadmapItem,
+    RoadmapLLMResponse,
+    SkippedDomain,
+    StudyWeek,
+)
+from llm_engine.schemas.syllabus import (
+    ExamDomain,
+    LLMExamDomain,
+    Syllabus,
+    SyllabusLLMResponse,
+)
+
+__all__ = [
+    "Assessment",
+    "AssessmentLLMResponse",
+    "Difficulty",
+    "DomainQualitativeNote",
+    "DomainScore",
+    "ExamDomain",
+    "GradedAssessment",
+    "GradingDiagnosis",
+    "KnowledgeGap",
+    "LLMExamDomain",
+    "LLMQuestion",
+    "LLMQuestionOption",
+    "LLMRoadmapItem",
+    "LLMSkippedDomain",
+    "LLMStudyWeek",
+    "OptionID",
+    "Proficiency",
+    "Question",
+    "QuestionOption",
+    "QuestionResult",
+    "Roadmap",
+    "RoadmapItem",
+    "RoadmapLLMResponse",
+    "Severity",
+    "SkippedDomain",
+    "StudyWeek",
+    "Syllabus",
+    "SyllabusLLMResponse",
+    "UserAnswer",
+]
