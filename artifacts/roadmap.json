@@ -1,0 +1,69 @@
+{
+  "roadmap_id": "4e1fd41f-e7d0-46fb-bf1d-1074fce318fd",
+  "assessment_id": "b9889186-cdc3-4fc7-a91b-e6e6893e1dda",
+  "syllabus_id": "26fa68f2-554a-40df-b6db-df96fd37f6f5",
+  "topic": "Cloud Architecture",
+  "certification": "AWS Solutions Architect Associate SAA-C03",
+  "exam_date": null,
+  "items": [
+    {
+      "item_id": "fc553bd8-315f-4d82-ab63-5b8a09fb8d95",
+      "domain_id": "design-high-performing-architectures",
+      "title": "Optimization Strategies for Read-Heavy Workloads",
+      "objective": "Understand and apply optimization strategies for read-heavy workloads using caching mechanisms.",
+      "subtopics": [
+        "Caching with Amazon ElastiCache",
+        "Read replicas in databases",
+        "Using CloudFront for content delivery"
+      ],
+      "why_included": "The learner scored 0.0% in this domain and incorrectly selected a multi-AZ deployment instead of caching with Amazon ElastiCache (evidence: 82f62179-e77c-4646-a328-0d4e540e9cc1).",
+      "priority": 1,
+      "estimated_hours": 4.0,
+      "prerequisites": []
+    },
+    {
+      "item_id": "1eeab455-7998-41f4-8fb8-fd2be70a4e0a",
+      "domain_id": "design-high-performing-architectures",
+      "title": "Choosing the Right NoSQL Database",
+      "objective": "Identify and select appropriate NoSQL database services for low-latency access.",
+      "subtopics": [
+        "Comparison of NoSQL databases",
+        "Use cases for Amazon DynamoDB vs. Amazon Aurora",
+        "Data modeling in NoSQL"
+      ],
+      "why_included": "The learner misidentified the appropriate NoSQL database service for low-latency access, choosing Amazon Aurora instead of Amazon DynamoDB (evidence: ad89a225-6d70-4fe8-9afb-9e84c6df8eee).",
+      "priority": 2,
+      "estimated_hours": 3.0,
+      "prerequisites": []
+    },
+    {
+      "item_id": "58a64e61-b71c-4943-9009-55714cc97c2c",
+      "domain_id": "design-resilient-architectures",
+      "title": "Effective Fault Tolerance Strategies for Multi-Tier Applications",
+      "objective": "Explore and implement effective fault tolerance strategies for multi-tier applications using multiple Availability Zones.",
+      "subtopics": [
+        "Elastic Load Balancing",
+        "Multi-AZ deployments",
+        "Disaster recovery planning"
+      ],
+      "why_included": "The learner confuses effective fault tolerance strategies for multi-tier applications, opting for a single Availability Zone instead of utilizing Elastic Load Balancing across multiple zones (evidence: 685889ef-cdaa-4c8b-9e8e-6d3db2b14497).",
+      "priority": 3,
+      "estimated_hours": 3.0,
+      "prerequisites": []
+    }
+  ],
+  "skipped_domains": [
+    {
+      "domain_id": "design-secure-applications-and-architectures",
+      "reason": "The learner demonstrated proficiency with a score of 100.0%, indicating no need for further study in this domain."
+    },
+    {
+      "domain_id": "design-cost-optimized-architectures",
+      "reason": "The learner demonstrated proficiency with a score of 100.0%, indicating no need for further study in this domain."
+    }
+  ],
+  "total_estimated_hours": 10.0,
+  "weekly_plan": null,
+  "guidance_summary": "Focus your study efforts on high-performing architecture concepts, particularly optimization strategies for read-heavy workloads and selecting the right NoSQL database. Additionally, review fault tolerance strategies for multi-tier applications to solidify your understanding. Prioritize hands-on practice with AWS services to reinforce learning and application of these concepts.",
+  "created_at": "2026-07-12T14:40:04.105964Z"
+}

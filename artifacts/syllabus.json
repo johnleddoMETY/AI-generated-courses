@@ -1,0 +1,54 @@
+{
+  "syllabus_id": "26fa68f2-554a-40df-b6db-df96fd37f6f5",
+  "topic": "Cloud Architecture",
+  "certification": "AWS Solutions Architect Associate SAA-C03",
+  "exam_code": "SAA-C03",
+  "domains": [
+    {
+      "domain_id": "design-resilient-architectures",
+      "name": "Design Resilient Architectures",
+      "weight_percent": 30.0,
+      "key_topics": [
+        "High availability and fault tolerance",
+        "Decoupling mechanisms",
+        "Designing for disaster recovery",
+        "Load balancing and auto-scaling"
+      ]
+    },
+    {
+      "domain_id": "design-high-performing-architectures",
+      "name": "Design High-Performing Architectures",
+      "weight_percent": 28.0,
+      "key_topics": [
+        "Optimizing performance for compute, storage, and database services",
+        "Caching strategies",
+        "Choosing the right database",
+        "Networking performance optimization"
+      ]
+    },
+    {
+      "domain_id": "design-secure-applications-and-architectures",
+      "name": "Design Secure Applications and Architectures",
+      "weight_percent": 24.0,
+      "key_topics": [
+        "Identity and access management",
+        "Data protection methods",
+        "Network security controls",
+        "Compliance and governance frameworks"
+      ]
+    },
+    {
+      "domain_id": "design-cost-optimized-architectures",
+      "name": "Design Cost-Optimized Architectures",
+      "weight_percent": 18.0,
+      "key_topics": [
+        "Cost management strategies",
+        "Choosing the right pricing models",
+        "Resource optimization",
+        "Monitoring and reporting costs"
+      ]
+    }
+  ],
+  "source_note": "This blueprint is based on the official AWS certification documentation for the Solutions Architect Associate exam (SAA-C03) as of October 2023, and I am confident in its accuracy.",
+  "created_at": "2026-07-12T14:39:21.702793Z"
+}

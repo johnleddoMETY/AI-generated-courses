@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-engine"
+version = "0.1.0"
+description = "LLM pipeline for adaptive certification course generation: syllabus -> assessment -> grading -> roadmap"
+requires-python = ">=3.11"
+dependencies = [
+    "litellm>=1.40",
+    "pydantic>=2.7",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+cli = ["rich>=13.0"]
+dev = ["pytest>=8.0", "rich>=13.0"]
+
+[tool.setuptools.packages.find]
+include = ["llm_engine*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

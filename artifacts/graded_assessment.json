@@ -1,0 +1,121 @@
+{
+  "assessment_id": "b9889186-cdc3-4fc7-a91b-e6e6893e1dda",
+  "overall_score_percent": 57.0,
+  "question_results": [
+    {
+      "question_id": "6d2c497f-ce26-4f21-9e2e-fe4b9396dc26",
+      "domain_id": "design-resilient-architectures",
+      "correct": true,
+      "selected_option_id": "A",
+      "correct_option_id": "A",
+      "explanation": "The correct answer is A: Amazon EC2 Auto Scaling, which automatically adjusts the number of EC2 instances in response to traffic demands, ensuring high availability. \n\nB: Amazon S3 is primarily for object storage and does not directly provide high availability for web applications. \n\nC: AWS Lambda is a serverless computing service that can handle spikes in traffic but may not be suitable for all web applications, particularly those requiring persistent states. \n\nD: Amazon RDS provides managed database services but does not directly contribute to the high availability of the web application itself."
+    },
+    {
+      "question_id": "685889ef-cdaa-4c8b-9e8e-6d3db2b14497",
+      "domain_id": "design-resilient-architectures",
+      "correct": false,
+      "selected_option_id": "A",
+      "correct_option_id": "B",
+      "explanation": "The correct answer is B: Using Elastic Load Balancing and deploying instances across multiple Availability Zones ensures that if one zone fails, the application remains available via instances in other zones. \n\nA: Deploying all components in a single Availability Zone does not provide fault tolerance, as a failure in that zone would cause the entire application to go down. \n\nC: A single Amazon RDS instance can become a single point of failure; for fault tolerance, a multi-AZ deployment is recommended. \n\nD: A static IP does not contribute to fault tolerance; it simply provides a fixed address for accessing resources."
+    },
+    {
+      "question_id": "82f62179-e77c-4646-a328-0d4e540e9cc1",
+      "domain_id": "design-high-performing-architectures",
+      "correct": false,
+      "selected_option_id": "A",
+      "correct_option_id": "B",
+      "explanation": "The correct answer is B: Using Amazon ElastiCache allows you to cache frequently accessed data, significantly improving read performance for read-heavy workloads. \n\nA: While a multi-AZ deployment improves availability, it does not specifically optimize for read performance. \n\nC: Regular backups to Amazon S3 are important for data durability but do not directly enhance performance. \n\nD: Increasing the instance size may help, but it doesn't address caching, which is crucial for optimizing read-heavy workloads."
+    },
+    {
+      "question_id": "ad89a225-6d70-4fe8-9afb-9e84c6df8eee",
+      "domain_id": "design-high-performing-architectures",
+      "correct": false,
+      "selected_option_id": "C",
+      "correct_option_id": "A",
+      "explanation": "The correct answer is A: Amazon DynamoDB is a fully managed NoSQL database service that provides low-latency access and is designed for high scalability. \n\nB: Amazon RDS is a relational database service and is not optimized for NoSQL use cases. \n\nC: Amazon Aurora is a relational database compatible with MySQL and PostgreSQL and is not suitable for NoSQL workloads. \n\nD: Amazon Redshift is a data warehousing service, not suitable for real-time low-latency access."
+    },
+    {
+      "question_id": "cb57b888-7fc3-4200-8984-ef3db8a6c69d",
+      "domain_id": "design-secure-applications-and-architectures",
+      "correct": true,
+      "selected_option_id": "A",
+      "correct_option_id": "A",
+      "explanation": "The correct answer is A: AWS Identity and Access Management (IAM) allows you to manage user identities and control access to AWS resources, which is essential for compliance with data protection regulations. \n\nB: Amazon CloudFront is a content delivery network and does not manage user identities. \n\nC: AWS Lambda is a serverless compute service that does not provide identity management. \n\nD: Amazon S3 is an object storage service, and while it has access controls, it does not manage identities."
+    },
+    {
+      "question_id": "f04cadd7-4bf1-4511-8a6d-958ff431646d",
+      "domain_id": "design-cost-optimized-architectures",
+      "correct": true,
+      "selected_option_id": "B",
+      "correct_option_id": "B",
+      "explanation": "The correct answer is B: Implementing Reserved Instances for steady-state usage allows you to save significantly on costs compared to on-demand pricing while maintaining performance. \n\nA: Switching to on-demand instances can increase costs, especially for long-term workloads. \n\nC: Using the highest instance types for all applications is not cost-effective and may lead to unnecessary expenses. \n\nD: Disabling auto-scaling can lead to performance issues during traffic spikes and does not effectively manage costs."
+    }
+  ],
+  "domain_scores": [
+    {
+      "domain_id": "design-resilient-architectures",
+      "domain_name": "Design Resilient Architectures",
+      "weight_percent": 30.0,
+      "questions_total": 2,
+      "questions_correct": 1,
+      "score_percent": 50.0,
+      "proficiency": "developing"
+    },
+    {
+      "domain_id": "design-high-performing-architectures",
+      "domain_name": "Design High-Performing Architectures",
+      "weight_percent": 28.0,
+      "questions_total": 2,
+      "questions_correct": 0,
+      "score_percent": 0.0,
+      "proficiency": "weak"
+    },
+    {
+      "domain_id": "design-secure-applications-and-architectures",
+      "domain_name": "Design Secure Applications and Architectures",
+      "weight_percent": 24.0,
+      "questions_total": 1,
+      "questions_correct": 1,
+      "score_percent": 100.0,
+      "proficiency": "proficient"
+    },
+    {
+      "domain_id": "design-cost-optimized-architectures",
+      "domain_name": "Design Cost-Optimized Architectures",
+      "weight_percent": 18.0,
+      "questions_total": 1,
+      "questions_correct": 1,
+      "score_percent": 100.0,
+      "proficiency": "proficient"
+    }
+  ],
+  "gaps": [
+    {
+      "domain_id": "design-resilient-architectures",
+      "gap_summary": "confuses effective fault tolerance strategies for multi-tier applications, opting for a single Availability Zone instead of utilizing Elastic Load Balancing across multiple zones.",
+      "severity": "moderate",
+      "evidence_question_ids": [
+        "685889ef-cdaa-4c8b-9e8e-6d3db2b14497"
+      ]
+    },
+    {
+      "domain_id": "design-high-performing-architectures",
+      "gap_summary": "lacks understanding of optimization strategies for read-heavy workloads, incorrectly selecting a multi-AZ deployment instead of caching with Amazon ElastiCache.",
+      "severity": "critical",
+      "evidence_question_ids": [
+        "82f62179-e77c-4646-a328-0d4e540e9cc1"
+      ]
+    },
+    {
+      "domain_id": "design-high-performing-architectures",
+      "gap_summary": "misidentifies the appropriate NoSQL database service for low-latency access, choosing Amazon Aurora instead of Amazon DynamoDB.",
+      "severity": "moderate",
+      "evidence_question_ids": [
+        "ad89a225-6d70-4fe8-9afb-9e84c6df8eee"
+      ]
+    }
+  ],
+  "diagnostic_summary": "The learner exhibits a solid understanding of secure and cost-optimized architectures, but there are critical gaps in high-performing architecture concepts, particularly regarding database optimization strategies. This indicates a need for focused review in performance-related topics to ensure readiness for the certification exam.",
+  "strengths_summary": "The learner demonstrates proficiency in designing secure applications and cost-optimized architectures, successfully answering all related questions correctly.",
+  "graded_at": "2026-07-12T14:39:51.384203Z"
+}
