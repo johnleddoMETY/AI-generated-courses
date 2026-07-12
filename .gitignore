@@ -15,3 +15,5 @@ dist/
 
 # Demo artifacts
 artifacts/
+.superpowers/
+docs/
