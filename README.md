@@ -350,17 +350,24 @@ the four-stage pipeline, this is everything that affects you:
   `(topic, certification)` pair is deterministic enough to cache and share
   across users — cache key on lowercased/trimmed topic+certification.
   First step toward the session-memory feature.
+The course-generation hooks below are listed in a sensible build order —
+each is easier or safer once the one before it exists.
+
+- **Lesson-level regeneration:** `generate_lesson` is exported and every
+  `Lesson` carries the `item_id` of the `RoadmapItem` it teaches, so one
+  lesson can be regenerated and swapped into a stored `Course` — for
+  refreshing stale content, or for retrying a single failed item. Note
+  that `generate_course` is fail-fast and returns no partial `Course`, so
+  failure-repair means running the per-item loop yourself over
+  `generate_lesson` and keeping the successes. That is available today
+  and needs no change to this package.
 - **Parallel lesson fan-out:** `generate_lesson` is standalone and shares
   no state between calls, so the sequential loop in `generate_course` can
-  become a thread pool without touching either function's contract. Purely
-  a latency win — the token cost is identical. Note the tradeoff: on
-  failure, sequential has paid only for lessons up to the failure, while
-  parallel pays for everything already in flight.
-- **Lesson-level regeneration:** `generate_lesson` is exported and every
-  `Lesson` carries the `item_id` of the `RoadmapItem` it teaches, so a
-  single lesson can be regenerated and swapped into a stored `Course`.
-  This is the upgrade path from today's retry-the-whole-course to
-  retry-one-lesson.
+  become a thread pool without touching either function's contract.
+  Purely a latency win — the token cost is identical. Worth doing after
+  the hook above: parallelism means a single failure discards every
+  lesson already in flight, and being able to salvage individual lessons
+  is what makes that acceptable.
 - **Lesson caching:** lessons for the same `(objective, subtopics,
   certification)` are largely reusable across learners. The catch: the
   prompt deliberately grounds each lesson in `why_included`, which is
@@ -368,3 +375,15 @@ the four-stage pipeline, this is everything that affects you:
   never hits. Reuse means keying on the non-personalized fields and
   accepting less personalized lessons — a product tradeoff, not a free
   win.
+- **Fine-tuned lesson model:** model choice is already per-task and
+  env-driven (`LLM_MODEL_LESSON`), so a fine-tuned endpoint drops in with
+  no code change. Sensible only as a cost play on the lesson task, which
+  dominates spend — not for factual grounding, since the pipeline must
+  serve arbitrary certifications and exam blueprints version over time
+  (retrieval over official exam guides is the better tool there), and not
+  for output structure, which `structured_completion` already enforces.
+  Two hard prerequisites: enough real runs to build training data, and an
+  eval harness — there is currently no way to measure lesson quality, so
+  a regression would be invisible. Try the free experiment first: point
+  `LLM_MODEL_LESSON` at a cheaper model and compare the `cost_usd` lines
+  against the output you get.
