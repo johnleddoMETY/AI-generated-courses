@@ -22,11 +22,14 @@ grade_assessment ───────► GradedAssessment (scores computed in P
         │                                   LLM diagnosis only, 1 LLM call)
         ▼
 generate_roadmap ───────► Roadmap         (gap-targeted plan that skips
-                                           proficient domains, 1 LLM call)
+        │                                  proficient domains, 1 LLM call)
+        ▼
+generate_course ────────► Course          (one lesson per roadmap item,
+                                           1 LLM call per item)
 ```
 
-4 LLM calls per full run. All calls go through LiteLLM; provider and model
-are env-configured.
+4 planning/assessment LLM calls per full run, plus one call per roadmap item for course content.
+All calls go through LiteLLM; provider and model are env-configured.
 
 ## Setup
 
@@ -64,8 +67,8 @@ Import everything from the package root:
 
 ```python
 from llm_engine import (
-    generate_syllabus, generate_assessment, grade_assessment, generate_roadmap,
-    Syllabus, Assessment, UserAnswer, GradedAssessment, Roadmap,
+    generate_syllabus, generate_assessment, grade_assessment, generate_roadmap, generate_course,
+    Syllabus, Assessment, UserAnswer, GradedAssessment, Roadmap, Course, Lesson,
 )
 ```
 
@@ -202,11 +205,66 @@ Proficient domains are skipped (or reduced to one light review item) and
 listed in `skipped_domains` — this is the product's core behavior.
 `weekly_plan` is null unless `exam_date` is provided.
 
+### generate_course(roadmap) -> Course
+
+```python
+course = generate_course(roadmap)
+```
+
+```json
+{
+  "course_id": "g88b…",
+  "roadmap_id": "e66f…",
+  "topic": "Cloud Architecture",
+  "certification": "AWS Solutions Architect Associate SAA-C03",
+  "lessons": [
+    {
+      "lesson_id": "h99c…",
+      "item_id": "f77a…",
+      "title": "Designing Secure Architectures",
+      "sections": [
+        {
+          "section_id": "i00d…",
+          "heading": "IAM Principles",
+          "content": "…"
+        }
+      ],
+      "examples": [
+        {
+          "title": "VPC with IAM-gated subnets",
+          "description": "…",
+          "code_snippet": "…"
+        }
+      ],
+      "practice_questions": [
+        {
+          "question_id": "j11e…",
+          "stem": "…",
+          "options": [{"option_id": "A", "text": "…"}],
+          "correct_option_id": "A",
+          "explanation": "…"
+        }
+      ],
+      "summary": "…",
+      "estimated_hours": 4.0
+    }
+  ],
+  "total_estimated_hours": 18.5,
+  "created_at": "2026-07-11T19:07:00Z"
+}
+```
+
+Generates one `Lesson` per `Roadmap.items` entry. Each lesson is a complete
+teaching unit: sections with explanations, real-world examples, practice
+questions, and a summary. Fans out one LLM call per roadmap item (fail-fast
+on any single item failure). The returned `Course` object serializes
+identically to other models — store by `course_id`.
+
 ## Integration rules (read this, backend)
 
 1. **The package is stateless.** No DB, no files, no sessions. You own
    persistence and session flow. Call order: syllabus → assessment →
-   (collect answers) → grade → roadmap.
+   (collect answers) → grade → roadmap → course.
 2. **Persistence.** Every model serializes with `model_dump_json()` and
    restores with `Model.model_validate_json()` — store them in MySQL JSON
    columns keyed by their `*_id` fields (all UUIDs generated in code, safe
@@ -228,6 +286,3 @@ listed in `skipped_domains` — this is the product's core behavior.
   `(topic, certification)` pair is deterministic enough to cache and share
   across users — cache key on lowercased/trimmed topic+certification.
   First step toward the session-memory feature.
-- **Full course generation:** `RoadmapItem` is the future unit of content
-  generation — each item later fans out to a lesson generator. IDs and
-  serialization are already in place.
