@@ -350,8 +350,9 @@ the four-stage pipeline, this is everything that affects you:
   `(topic, certification)` pair is deterministic enough to cache and share
   across users — cache key on lowercased/trimmed topic+certification.
   First step toward the session-memory feature.
-The course-generation hooks below are listed in a sensible build order —
-each is easier or safer once the one before it exists.
+The first three course-generation hooks below are listed in build order —
+each is easier or safer once the one before it exists. The last two are
+larger, quality-focused initiatives rather than incremental follow-ups.
 
 - **Lesson-level regeneration:** `generate_lesson` is exported and every
   `Lesson` carries the `item_id` of the `RoadmapItem` it teaches, so one
@@ -375,6 +376,29 @@ each is easier or safer once the one before it exists.
   never hits. Reuse means keying on the non-personalized fields and
   accepting less personalized lessons — a product tradeoff, not a free
   win.
+- **Retrieval-grounded generation (RAG):** many certifications publish an
+  official exam guide; many do not — so this is conditional by nature,
+  grounding where source material exists and falling back to today's
+  generic path where it doesn't. The schema already models that
+  distinction: `source_note` discloses how grounded a blueprint is, and
+  `exam_code` stays null when the certification isn't confidently known.
+  Highest leverage is `generate_syllabus`, because domain weights are not
+  just one field — assessment question distribution and roadmap
+  prioritization are both computed from them, so one hallucinated weight
+  corrupts every downstream stage. Lessons and assessment benefit too;
+  grading barely does, since its scores are already deterministic.
+  Two design constraints. Keep retrieval **caller-side**: this package is
+  stateless by contract, so the corpus, ingestion, and any vector store
+  belong to the backend, and the stage functions should accept optional
+  retrieved context as a parameter rather than owning a document store.
+  And don't assume a vector database — an exam guide is often a dozen
+  pages and fits in context whole; retrieval machinery only earns its
+  keep on large corpora, such as full service documentation for lesson
+  generation. Confirm licensing before ingesting vendor material:
+  certification content is often restrictively licensed and generating
+  derivative study material from it is a legal question, not a technical
+  one. Worth settling before building the pipeline, since it can rule out
+  specific vendors entirely.
 - **Fine-tuned lesson model:** model choice is already per-task and
   env-driven (`LLM_MODEL_LESSON`), so a fine-tuned endpoint drops in with
   no code change. Sensible only as a cost play on the lesson task, which
