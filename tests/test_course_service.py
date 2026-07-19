@@ -109,3 +109,20 @@ def test_generate_course_fails_fast(monkeypatch: pytest.MonkeyPatch) -> None:
 
     with pytest.raises(LLMCallError):
         generate_course(roadmap)
+
+
+def test_generate_course_logs_progress_per_lesson(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    monkeypatch.setattr(
+        "llm_engine.services.course.structured_completion",
+        lambda *args, **kwargs: _llm_lesson("ok"),
+    )
+    roadmap = _roadmap([_item("item-1", "domain-a", 4.0), _item("item-2", "domain-b", 2.5)])
+
+    with caplog.at_level("INFO", logger="llm_engine.services.course"):
+        generate_course(roadmap)
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert "Generating lesson 1/2: Lesson for domain-a" in messages
+    assert "Generating lesson 2/2: Lesson for domain-b" in messages

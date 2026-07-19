@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -14,6 +15,8 @@ from llm_engine.schemas import (
     Roadmap,
     RoadmapItem,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def generate_lesson(item: RoadmapItem, topic: str, certification: str) -> Lesson:
@@ -50,12 +53,15 @@ def generate_course(roadmap: Roadmap) -> Course:
 
     One lesson is generated per RoadmapItem, in roadmap.items order
     (priority order). Fail-fast: if any lesson generation raises, the
-    exception propagates and no partial course is returned.
+    exception propagates and no partial course is returned. Progress is
+    logged per lesson so a slow or failed fan-out can be located — the
+    raised error itself does not identify which item failed.
     """
-    lessons = [
-        generate_lesson(item, roadmap.topic, roadmap.certification)
-        for item in roadmap.items
-    ]
+    total = len(roadmap.items)
+    lessons: list[Lesson] = []
+    for position, item in enumerate(roadmap.items, start=1):
+        logger.info("Generating lesson %d/%d: %s", position, total, item.title)
+        lessons.append(generate_lesson(item, roadmap.topic, roadmap.certification))
 
     return Course(
         course_id=str(uuid4()),
