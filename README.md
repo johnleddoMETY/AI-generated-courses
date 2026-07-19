@@ -261,6 +261,50 @@ returned. Lesson count therefore always equals `len(roadmap.items)`.
 `total_estimated_hours` is copied from the roadmap's item hours, not
 re-estimated.
 
+## What changed with course generation (backend, start here)
+
+Course generation added a fifth stage. If you already integrated against
+the four-stage pipeline, this is everything that affects you:
+
+1. **BREAKING — `run_full_pipeline` now returns 5 values, not 4.**
+   ```python
+   # before
+   syllabus, assessment, graded, roadmap = run_full_pipeline(...)
+   # now
+   syllabus, assessment, graded, roadmap, course = run_full_pipeline(...)
+   ```
+   Nothing else about the first four stages changed — same signatures,
+   same schemas, same behavior.
+
+2. **New call, safe to defer.** `generate_course(roadmap) -> Course` is a
+   normal stage function. `run_full_pipeline` runs it automatically, but
+   you can skip it and call it later (e.g. only after the learner accepts
+   the roadmap) — it needs nothing but the stored `Roadmap`.
+
+3. **New things to persist.** `Course` keyed by `course_id`, same JSON
+   column pattern as everything else. `Course.roadmap_id` links back to
+   the roadmap; each `Lesson.item_id` is a foreign key to the
+   `RoadmapItem` it teaches. Lessons are returned in roadmap priority
+   order — preserve that order, it is the intended reading order.
+
+4. **No answer key to strip.** Unlike `Assessment`, `Lesson` is safe to
+   send to the frontend whole. `practice_questions` are open-ended
+   (`question`/`answer`/`explanation`) and intended to be shown with
+   their answers as study material — there is nothing to hide and no
+   client-trust issue, because nothing here is scored.
+
+5. **Cost and latency change shape.** The first four stages are a fixed 4
+   LLM calls. Course generation is one call per roadmap item (typically
+   3–8, since proficient domains are already skipped), run sequentially,
+   producing a full textbook-length lesson each. This is by far the
+   slowest and most expensive stage — treat it as a background job, not
+   something to run inside a request/response cycle.
+
+6. **Fail-fast, so retry the whole call.** If any single lesson fails,
+   the exception propagates and no partial `Course` comes back. There is
+   no partial state to reconcile — just re-call `generate_course` with
+   the same roadmap.
+
 ## Integration rules (read this, backend)
 
 1. **The package is stateless.** No DB, no files, no sessions. You own
@@ -274,7 +318,9 @@ re-estimated.
    and `explanation` for every question. You MUST strip these before
    sending questions to the frontend. When grading, do NOT trust an
    assessment sent back by the client — load the stored server-side
-   `Assessment` and pass that to `grade_assessment`.
+   `Assessment` and pass that to `grade_assessment`. This applies to
+   `Assessment` only: `Lesson.practice_questions` are study material and
+   are meant to be shown with their answers.
 4. **Errors.** Everything raises typed exceptions from
    `llm_engine.exceptions` (`LLMEngineError` base; `LLMCallError` for
    provider failures, `StructuredOutputError` for unrecoverable schema
