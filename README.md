@@ -67,7 +67,8 @@ Import everything from the package root:
 
 ```python
 from llm_engine import (
-    generate_syllabus, generate_assessment, grade_assessment, generate_roadmap, generate_course,
+    generate_syllabus, generate_assessment, grade_assessment, generate_roadmap,
+    generate_course, generate_lesson,
     Syllabus, Assessment, UserAnswer, GradedAssessment, Roadmap, Course, Lesson,
 )
 ```
@@ -260,6 +261,22 @@ lesson fails, the exception propagates and no partial `Course` is
 returned. Lesson count therefore always equals `len(roadmap.items)`.
 `total_estimated_hours` is copied from the roadmap's item hours, not
 re-estimated.
+
+Progress is logged at INFO on `llm_engine.services.course`
+(`Generating lesson 2/6: <title>`). The raised exception names only the
+task, not the item, so these lines are how you identify which item failed
+in a long run.
+
+### generate_lesson(item, topic, certification) -> Lesson
+
+```python
+lesson = generate_lesson(roadmap.items[0], roadmap.topic, roadmap.certification)
+```
+
+The single-lesson primitive that `generate_course` fans out over, exposed
+so you can regenerate one lesson without rebuilding the whole course —
+retrying the item that failed, or refreshing stale content. Returns the
+same `Lesson` shape shown above. One LLM call.
 
 ## What changed with course generation (backend, start here)
 
