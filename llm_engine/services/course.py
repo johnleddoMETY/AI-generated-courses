@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -15,8 +14,6 @@ from llm_engine.schemas import (
     Roadmap,
     RoadmapItem,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def generate_lesson(item: RoadmapItem, topic: str, certification: str) -> Lesson:

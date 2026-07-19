@@ -221,32 +221,22 @@ course = generate_course(roadmap)
     {
       "lesson_id": "h99c…",
       "item_id": "f77a…",
-      "title": "Designing Secure Architectures",
+      "title": "IAM permission boundaries deep dive",
       "sections": [
-        {
-          "section_id": "i00d…",
-          "heading": "IAM Principles",
-          "content": "…"
-        }
+        {"heading": "What a permission boundary is",
+         "body_markdown": "A boundary caps the maximum permissions…"}
       ],
       "examples": [
-        {
-          "title": "VPC with IAM-gated subnets",
-          "description": "…",
-          "code_snippet": "…"
-        }
+        {"scenario": "A developer needs S3 access but must never escalate to IAM admin.",
+         "walkthrough": "Attach a boundary that allows s3:* and denies iam:*…"}
       ],
       "practice_questions": [
-        {
-          "question_id": "j11e…",
-          "stem": "…",
-          "options": [{"option_id": "A", "text": "…"}],
-          "correct_option_id": "A",
-          "explanation": "…"
-        }
+        {"question": "What is the effective permission when a boundary and an identity policy disagree?",
+         "answer": "The intersection of the two — both must allow the action.",
+         "explanation": "Boundaries do not grant permissions; they cap them…"}
       ],
-      "summary": "…",
-      "estimated_hours": 4.0
+      "summary": "Boundaries constrain the maximum permissions of an identity…",
+      "created_at": "2026-07-11T19:07:00Z"
     }
   ],
   "total_estimated_hours": 18.5,
@@ -254,11 +244,22 @@ course = generate_course(roadmap)
 }
 ```
 
-Generates one `Lesson` per `Roadmap.items` entry. Each lesson is a complete
-teaching unit: sections with explanations, real-world examples, practice
-questions, and a summary. Fans out one LLM call per roadmap item (fail-fast
-on any single item failure). The returned `Course` object serializes
-identically to other models — store by `course_id`.
+Generates one `Lesson` per `Roadmap.items` entry, in roadmap priority
+order, each grounded in that item's `objective`, `subtopics`, and
+`why_included` so lessons teach the learner's actual gaps rather than
+generic material. Each lesson targets 3–6 sections, 2–3 worked examples,
+and 3–5 practice questions.
+
+`practice_questions` are open-ended self-check questions (question + model
+answer + explanation) — deliberately **not** the MCQ format used by
+`Assessment`, since they are for study reinforcement, not scored
+diagnosis. They carry no answer key to strip.
+
+Fans out one LLM call per roadmap item and is fail-fast: if any single
+lesson fails, the exception propagates and no partial `Course` is
+returned. Lesson count therefore always equals `len(roadmap.items)`.
+`total_estimated_hours` is copied from the roadmap's item hours, not
+re-estimated.
 
 ## Integration rules (read this, backend)
 
