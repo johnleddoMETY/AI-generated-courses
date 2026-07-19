@@ -350,3 +350,21 @@ the four-stage pipeline, this is everything that affects you:
   `(topic, certification)` pair is deterministic enough to cache and share
   across users — cache key on lowercased/trimmed topic+certification.
   First step toward the session-memory feature.
+- **Parallel lesson fan-out:** `generate_lesson` is standalone and shares
+  no state between calls, so the sequential loop in `generate_course` can
+  become a thread pool without touching either function's contract. Purely
+  a latency win — the token cost is identical. Note the tradeoff: on
+  failure, sequential has paid only for lessons up to the failure, while
+  parallel pays for everything already in flight.
+- **Lesson-level regeneration:** `generate_lesson` is exported and every
+  `Lesson` carries the `item_id` of the `RoadmapItem` it teaches, so a
+  single lesson can be regenerated and swapped into a stored `Course`.
+  This is the upgrade path from today's retry-the-whole-course to
+  retry-one-lesson.
+- **Lesson caching:** lessons for the same `(objective, subtopics,
+  certification)` are largely reusable across learners. The catch: the
+  prompt deliberately grounds each lesson in `why_included`, which is
+  learner-specific ("you scored 25% here"), so a cache key including it
+  never hits. Reuse means keying on the non-personalized fields and
+  accepting less personalized lessons — a product tradeoff, not a free
+  win.
