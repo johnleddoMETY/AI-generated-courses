@@ -2,8 +2,8 @@
 
 LLM pipeline for MyEdMaster's adaptive course-generation platform. A user
 states a topic and certification; the pipeline generates an assessment,
-grades it, and produces a study roadmap that teaches **only what the user
-doesn't already know**.
+grades it, builds a study roadmap, and writes the course content for it —
+teaching **only what the user doesn't already know**.
 
 ```
 topic + certification (+ optional exam date)
@@ -28,8 +28,9 @@ generate_course ────────► Course          (one lesson per road
                                            1 LLM call per item)
 ```
 
-4 planning/assessment LLM calls per full run, plus one call per roadmap item for course content.
-All calls go through LiteLLM; provider and model are env-configured.
+4 planning and assessment LLM calls per full run, plus one call per
+roadmap item for course content. All calls go through LiteLLM; provider
+and model are env-configured.
 
 ## Setup
 
@@ -50,6 +51,11 @@ python demo_cli.py --topic "Cloud Architecture" \
 Flags: `--random-answers` (non-interactive), `--json-out artifacts/` (dump
 every stage's JSON — use these as your example payloads).
 
+Expect the demo to take several minutes. Stage 5 writes a full lesson per
+roadmap item, one call each, and is by far the longest stage — it logs
+`Generating lesson 2/6: <title>` per lesson at INFO so you can watch it
+progress rather than wonder whether it hung.
+
 Run tests (no API key needed; the live test auto-skips):
 
 ```bash
@@ -60,6 +66,50 @@ RUN_LIVE_LLM_TESTS=1 pytest tests/test_live_smoke.py   # opt-in, burns tokens
 All configuration lives in `.env` — see `.env.example` for every variable
 (models, per-task overrides, temperatures, timeouts, proficiency
 thresholds).
+
+## What changed with course generation (backend, start here)
+
+Course generation added a fifth stage. If you already integrated against
+the four-stage pipeline, this is everything that affects you:
+
+1. **BREAKING — `run_full_pipeline` now returns 5 values, not 4.**
+   ```python
+   # before
+   syllabus, assessment, graded, roadmap = run_full_pipeline(...)
+   # now
+   syllabus, assessment, graded, roadmap, course = run_full_pipeline(...)
+   ```
+   Nothing else about the first four stages changed — same signatures,
+   same schemas, same behavior.
+
+2. **New call, safe to defer.** `generate_course(roadmap) -> Course` is a
+   normal stage function. `run_full_pipeline` runs it automatically, but
+   you can skip it and call it later (e.g. only after the learner accepts
+   the roadmap) — it needs nothing but the stored `Roadmap`.
+
+3. **New things to persist.** `Course` keyed by `course_id`, same JSON
+   column pattern as everything else. `Course.roadmap_id` links back to
+   the roadmap; each `Lesson.item_id` is a foreign key to the
+   `RoadmapItem` it teaches. Lessons are returned in roadmap priority
+   order — preserve that order, it is the intended reading order.
+
+4. **No answer key to strip.** Unlike `Assessment`, `Lesson` is safe to
+   send to the frontend whole. `practice_questions` are open-ended
+   (`question`/`answer`/`explanation`) and intended to be shown with
+   their answers as study material — there is nothing to hide and no
+   client-trust issue, because nothing here is scored.
+
+5. **Cost and latency change shape.** The first four stages are a fixed 4
+   LLM calls. Course generation is one call per roadmap item (typically
+   3–8, since proficient domains are already skipped), run sequentially,
+   producing a full textbook-length lesson each. This is by far the
+   slowest and most expensive stage — treat it as a background job, not
+   something to run inside a request/response cycle.
+
+6. **Fail-fast, so retry the whole call.** If any single lesson fails,
+   the exception propagates and no partial `Course` comes back. There is
+   no partial state to reconcile — just re-call `generate_course` with
+   the same roadmap.
 
 ## API reference
 
@@ -277,50 +327,6 @@ The single-lesson primitive that `generate_course` fans out over, exposed
 so you can regenerate one lesson without rebuilding the whole course —
 retrying the item that failed, or refreshing stale content. Returns the
 same `Lesson` shape shown above. One LLM call.
-
-## What changed with course generation (backend, start here)
-
-Course generation added a fifth stage. If you already integrated against
-the four-stage pipeline, this is everything that affects you:
-
-1. **BREAKING — `run_full_pipeline` now returns 5 values, not 4.**
-   ```python
-   # before
-   syllabus, assessment, graded, roadmap = run_full_pipeline(...)
-   # now
-   syllabus, assessment, graded, roadmap, course = run_full_pipeline(...)
-   ```
-   Nothing else about the first four stages changed — same signatures,
-   same schemas, same behavior.
-
-2. **New call, safe to defer.** `generate_course(roadmap) -> Course` is a
-   normal stage function. `run_full_pipeline` runs it automatically, but
-   you can skip it and call it later (e.g. only after the learner accepts
-   the roadmap) — it needs nothing but the stored `Roadmap`.
-
-3. **New things to persist.** `Course` keyed by `course_id`, same JSON
-   column pattern as everything else. `Course.roadmap_id` links back to
-   the roadmap; each `Lesson.item_id` is a foreign key to the
-   `RoadmapItem` it teaches. Lessons are returned in roadmap priority
-   order — preserve that order, it is the intended reading order.
-
-4. **No answer key to strip.** Unlike `Assessment`, `Lesson` is safe to
-   send to the frontend whole. `practice_questions` are open-ended
-   (`question`/`answer`/`explanation`) and intended to be shown with
-   their answers as study material — there is nothing to hide and no
-   client-trust issue, because nothing here is scored.
-
-5. **Cost and latency change shape.** The first four stages are a fixed 4
-   LLM calls. Course generation is one call per roadmap item (typically
-   3–8, since proficient domains are already skipped), run sequentially,
-   producing a full textbook-length lesson each. This is by far the
-   slowest and most expensive stage — treat it as a background job, not
-   something to run inside a request/response cycle.
-
-6. **Fail-fast, so retry the whole call.** If any single lesson fails,
-   the exception propagates and no partial `Course` comes back. There is
-   no partial state to reconcile — just re-call `generate_course` with
-   the same roadmap.
 
 ## Integration rules (read this, backend)
 
