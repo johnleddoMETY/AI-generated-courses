@@ -1,69 +1,160 @@
 {
-  "roadmap_id": "4e1fd41f-e7d0-46fb-bf1d-1074fce318fd",
-  "assessment_id": "b9889186-cdc3-4fc7-a91b-e6e6893e1dda",
-  "syllabus_id": "26fa68f2-554a-40df-b6db-df96fd37f6f5",
+  "roadmap_id": "7c6249d6-ecc7-48f5-8ec5-f83395f01968",
+  "assessment_id": "697874f8-ef15-4537-9eae-d359f23acb6d",
+  "syllabus_id": "8b21b0a6-b59a-4884-a331-efd769b8faa4",
   "topic": "Cloud Architecture",
   "certification": "AWS Solutions Architect Associate SAA-C03",
-  "exam_date": null,
+  "exam_date": "2026-09-15",
   "items": [
     {
-      "item_id": "fc553bd8-315f-4d82-ab63-5b8a09fb8d95",
-      "domain_id": "design-high-performing-architectures",
-      "title": "Optimization Strategies for Read-Heavy Workloads",
-      "objective": "Understand and apply optimization strategies for read-heavy workloads using caching mechanisms.",
-      "subtopics": [
-        "Caching with Amazon ElastiCache",
-        "Read replicas in databases",
-        "Using CloudFront for content delivery"
-      ],
-      "why_included": "The learner scored 0.0% in this domain and incorrectly selected a multi-AZ deployment instead of caching with Amazon ElastiCache (evidence: 82f62179-e77c-4646-a328-0d4e540e9cc1).",
-      "priority": 1,
-      "estimated_hours": 4.0,
-      "prerequisites": []
-    },
-    {
-      "item_id": "1eeab455-7998-41f4-8fb8-fd2be70a4e0a",
-      "domain_id": "design-high-performing-architectures",
-      "title": "Choosing the Right NoSQL Database",
-      "objective": "Identify and select appropriate NoSQL database services for low-latency access.",
-      "subtopics": [
-        "Comparison of NoSQL databases",
-        "Use cases for Amazon DynamoDB vs. Amazon Aurora",
-        "Data modeling in NoSQL"
-      ],
-      "why_included": "The learner misidentified the appropriate NoSQL database service for low-latency access, choosing Amazon Aurora instead of Amazon DynamoDB (evidence: ad89a225-6d70-4fe8-9afb-9e84c6df8eee).",
-      "priority": 2,
-      "estimated_hours": 3.0,
-      "prerequisites": []
-    },
-    {
-      "item_id": "58a64e61-b71c-4943-9009-55714cc97c2c",
+      "item_id": "152f8018-e145-4035-95b2-e64953864b49",
       "domain_id": "design-resilient-architectures",
-      "title": "Effective Fault Tolerance Strategies for Multi-Tier Applications",
-      "objective": "Explore and implement effective fault tolerance strategies for multi-tier applications using multiple Availability Zones.",
+      "title": "Understanding Elastic Load Balancing vs. Amazon S3",
+      "objective": "Clarify the roles and functionalities of Elastic Load Balancing and Amazon S3 in achieving high availability.",
       "subtopics": [
-        "Elastic Load Balancing",
-        "Multi-AZ deployments",
-        "Disaster recovery planning"
+        "Elastic Load Balancing overview",
+        "Amazon S3 overview",
+        "High availability strategies"
       ],
-      "why_included": "The learner confuses effective fault tolerance strategies for multi-tier applications, opting for a single Availability Zone instead of utilizing Elastic Load Balancing across multiple zones (evidence: 685889ef-cdaa-4c8b-9e8e-6d3db2b14497).",
-      "priority": 3,
+      "why_included": "Critical gap identified: Confuses the role of Elastic Load Balancing with Amazon S3 in distributing traffic for high availability.",
+      "priority": 1,
       "estimated_hours": 3.0,
+      "prerequisites": []
+    },
+    {
+      "item_id": "cd7b02c8-9e11-4e65-8fa2-4cc14f79a292",
+      "domain_id": "design-secure-applications-and-architectures",
+      "title": "AWS IAM Fundamentals",
+      "objective": "Understand the purpose of AWS IAM in managing user identities and permissions.",
+      "subtopics": [
+        "Overview of AWS IAM",
+        "User management in IAM",
+        "Roles and policies in IAM"
+      ],
+      "why_included": "Critical gap identified: Lacks understanding of AWS IAM's role in managing user identities and permissions, confusing it with Amazon VPC.",
+      "priority": 2,
+      "estimated_hours": 2.0,
+      "prerequisites": []
+    },
+    {
+      "item_id": "cd79ac6c-4eb5-475f-b751-e9c22dd6f00c",
+      "domain_id": "design-secure-applications-and-architectures",
+      "title": "Data Protection Strategies in Amazon S3",
+      "objective": "Learn about data protection methods in Amazon S3, including encryption and access settings.",
+      "subtopics": [
+        "S3 encryption options",
+        "Access control settings",
+        "Best practices for data protection"
+      ],
+      "why_included": "Moderate gap identified: Misunderstands data protection strategies in S3, confusing encryption with public access settings.",
+      "priority": 3,
+      "estimated_hours": 2.0,
+      "prerequisites": [
+        "cd7b02c8-9e11-4e65-8fa2-4cc14f79a292"
+      ]
+    },
+    {
+      "item_id": "d6436e78-5730-4a01-977c-a2899caca9e3",
+      "domain_id": "design-cost-optimized-architectures",
+      "title": "Cost Optimization Strategies in AWS",
+      "objective": "Explore effective cost optimization strategies and debunk myths about provisioning at maximum capacity.",
+      "subtopics": [
+        "Understanding cost optimization",
+        "Provisioning strategies",
+        "Monitoring and controlling costs"
+      ],
+      "why_included": "Moderate gap identified: Confuses cost optimization strategies, incorrectly believing that provisioning at maximum capacity minimizes costs.",
+      "priority": 4,
+      "estimated_hours": 2.0,
       "prerequisites": []
     }
   ],
   "skipped_domains": [
     {
-      "domain_id": "design-secure-applications-and-architectures",
-      "reason": "The learner demonstrated proficiency with a score of 100.0%, indicating no need for further study in this domain."
+      "domain_id": "design-high-performing-architectures",
+      "reason": "The learner demonstrates a developing understanding with a score of 66.7% and successfully identifies key concepts related to high-performing architectures."
     },
     {
       "domain_id": "design-cost-optimized-architectures",
-      "reason": "The learner demonstrated proficiency with a score of 100.0%, indicating no need for further study in this domain."
+      "reason": "The learner has a developing understanding with a score of 50.0%, allowing for a light review but focusing on critical gaps in other domains."
     }
   ],
-  "total_estimated_hours": 10.0,
-  "weekly_plan": null,
-  "guidance_summary": "Focus your study efforts on high-performing architecture concepts, particularly optimization strategies for read-heavy workloads and selecting the right NoSQL database. Additionally, review fault tolerance strategies for multi-tier applications to solidify your understanding. Prioritize hands-on practice with AWS services to reinforce learning and application of these concepts.",
-  "created_at": "2026-07-12T14:40:04.105964Z"
+  "total_estimated_hours": 9.0,
+  "weekly_plan": [
+    {
+      "week_number": 1,
+      "focus": "Elastic Load Balancing and S3",
+      "item_ids": [
+        "152f8018-e145-4035-95b2-e64953864b49"
+      ],
+      "estimated_hours": 3.0
+    },
+    {
+      "week_number": 2,
+      "focus": "AWS IAM Fundamentals",
+      "item_ids": [
+        "cd7b02c8-9e11-4e65-8fa2-4cc14f79a292"
+      ],
+      "estimated_hours": 2.0
+    },
+    {
+      "week_number": 3,
+      "focus": "Data Protection in S3",
+      "item_ids": [
+        "cd79ac6c-4eb5-475f-b751-e9c22dd6f00c"
+      ],
+      "estimated_hours": 2.0
+    },
+    {
+      "week_number": 4,
+      "focus": "Cost Optimization Strategies",
+      "item_ids": [
+        "d6436e78-5730-4a01-977c-a2899caca9e3"
+      ],
+      "estimated_hours": 2.0
+    },
+    {
+      "week_number": 5,
+      "focus": "Review and Reinforcement",
+      "item_ids": [
+        "152f8018-e145-4035-95b2-e64953864b49",
+        "cd7b02c8-9e11-4e65-8fa2-4cc14f79a292",
+        "cd79ac6c-4eb5-475f-b751-e9c22dd6f00c",
+        "d6436e78-5730-4a01-977c-a2899caca9e3"
+      ],
+      "estimated_hours": 3.0
+    },
+    {
+      "week_number": 6,
+      "focus": "Practice Exam and Identify Weak Areas",
+      "item_ids": [],
+      "estimated_hours": 2.0
+    },
+    {
+      "week_number": 7,
+      "focus": "Focus on High-Performing Architectures",
+      "item_ids": [],
+      "estimated_hours": 2.0
+    },
+    {
+      "week_number": 8,
+      "focus": "Focus on Cost-Optimized Architectures",
+      "item_ids": [],
+      "estimated_hours": 2.0
+    },
+    {
+      "week_number": 9,
+      "focus": "Final Review of All Domains",
+      "item_ids": [],
+      "estimated_hours": 3.0
+    },
+    {
+      "week_number": 10,
+      "focus": "Final Exam Preparation",
+      "item_ids": [],
+      "estimated_hours": 2.0
+    }
+  ],
+  "guidance_summary": "Focus on addressing critical gaps in resilient and secure architectures, as these foundational concepts are essential for success in the exam. Engage in hands-on practice and assessments to reinforce learning and identify any remaining weaknesses. Use the final weeks for comprehensive reviews and practice exams to build confidence.",
+  "created_at": "2026-07-13T00:48:49.749323Z"
 }
