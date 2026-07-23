@@ -7,10 +7,15 @@ domain schemas, and the typed exceptions.
 from llm_engine.exceptions import LLMCallError, LLMEngineError, StructuredOutputError
 from llm_engine.schemas import (
     Assessment,
+    Course,
     DomainScore,
     ExamDomain,
     GradedAssessment,
     KnowledgeGap,
+    Lesson,
+    LessonExample,
+    LessonPracticeQuestion,
+    LessonSection,
     Question,
     QuestionOption,
     QuestionResult,
@@ -23,6 +28,8 @@ from llm_engine.schemas import (
 )
 from llm_engine.services import (
     generate_assessment,
+    generate_course,
+    generate_lesson,
     generate_roadmap,
     generate_syllabus,
     grade_assessment,
@@ -31,10 +38,15 @@ from llm_engine.services import (
 
 __all__ = [
     "Assessment",
+    "Course",
     "DomainScore",
     "ExamDomain",
     "GradedAssessment",
     "KnowledgeGap",
+    "Lesson",
+    "LessonExample",
+    "LessonPracticeQuestion",
+    "LessonSection",
     "LLMCallError",
     "LLMEngineError",
     "Question",
@@ -48,6 +60,8 @@ __all__ = [
     "Syllabus",
     "UserAnswer",
     "generate_assessment",
+    "generate_course",
+    "generate_lesson",
     "generate_roadmap",
     "generate_syllabus",
     "grade_assessment",

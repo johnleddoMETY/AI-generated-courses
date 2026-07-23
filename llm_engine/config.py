@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-TaskName = Literal["syllabus", "assessment", "grading", "roadmap"]
+TaskName = Literal["syllabus", "assessment", "grading", "roadmap", "lesson"]
 
 DEFAULT_MODEL = "openai/gpt-4o-mini"
 
@@ -27,6 +27,7 @@ _DEFAULT_TEMPERATURES: dict[str, float] = {
     "assessment": 0.6,
     "grading": 0.2,
     "roadmap": 0.6,
+    "lesson": 0.6,
 }
 
 

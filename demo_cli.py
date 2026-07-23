@@ -28,12 +28,14 @@ from rich.table import Table
 
 from llm_engine import (
     Assessment,
+    Course,
     GradedAssessment,
     LLMEngineError,
     Roadmap,
     Syllabus,
     UserAnswer,
     generate_assessment,
+    generate_course,
     generate_roadmap,
     generate_syllabus,
     grade_assessment,
@@ -226,12 +228,33 @@ def show_roadmap(roadmap: Roadmap) -> None:
     console.print(f"\n[bold]Guidance:[/bold] {roadmap.guidance_summary}")
 
 
+def show_course(course: Course) -> None:
+    console.print()
+    table = Table(title=f"Course — {len(course.lessons)} lesson(s), "
+                        f"{course.total_estimated_hours:.1f}h total")
+    table.add_column("#", justify="right")
+    table.add_column("Lesson")
+    table.add_column("Sections", justify="right")
+    table.add_column("Examples", justify="right")
+    table.add_column("Practice Qs", justify="right")
+    for number, lesson in enumerate(course.lessons, start=1):
+        table.add_row(
+            str(number),
+            lesson.title,
+            str(len(lesson.sections)),
+            str(len(lesson.examples)),
+            str(len(lesson.practice_questions)),
+        )
+    console.print(table)
+
+
 def dump_artifacts(
     directory: Path,
     syllabus: Syllabus,
     assessment: Assessment,
     graded: GradedAssessment,
     roadmap: Roadmap,
+    course: Course,
 ) -> None:
     directory.mkdir(parents=True, exist_ok=True)
     artifacts = {
@@ -239,6 +262,7 @@ def dump_artifacts(
         "assessment.json": assessment,
         "graded_assessment.json": graded,
         "roadmap.json": roadmap,
+        "course.json": course,
     }
     for filename, model in artifacts.items():
         (directory / filename).write_text(model.model_dump_json(indent=2))
@@ -254,30 +278,34 @@ def main() -> None:
     check_api_key()
 
     try:
-        with console.status("[bold]Stage 1/4 — generating syllabus...[/bold]"):
+        with console.status("[bold]Stage 1/5 — generating syllabus...[/bold]"):
             syllabus = generate_syllabus(args.topic, args.certification)
         show_syllabus(syllabus)
 
-        with console.status("[bold]Stage 2/4 — generating assessment...[/bold]"):
+        with console.status("[bold]Stage 2/5 — generating assessment...[/bold]"):
             assessment = generate_assessment(
                 syllabus, num_questions=args.num_questions, exam_date=args.exam_date
             )
 
         answers = collect_answers(assessment, args.random_answers)
 
-        with console.status("[bold]Stage 3/4 — grading...[/bold]"):
+        with console.status("[bold]Stage 3/5 — grading...[/bold]"):
             graded = grade_assessment(assessment, answers)
         show_results(graded)
 
-        with console.status("[bold]Stage 4/4 — generating roadmap...[/bold]"):
+        with console.status("[bold]Stage 4/5 — generating roadmap...[/bold]"):
             roadmap = generate_roadmap(syllabus, graded, exam_date=args.exam_date)
         show_roadmap(roadmap)
+
+        with console.status("[bold]Stage 5/5 — generating course...[/bold]"):
+            course = generate_course(roadmap)
+        show_course(course)
     except LLMEngineError as exc:
         console.print(Panel(str(exc), title="Pipeline failed", border_style="red"))
         sys.exit(1)
 
     if args.json_out:
-        dump_artifacts(args.json_out, syllabus, assessment, graded, roadmap)
+        dump_artifacts(args.json_out, syllabus, assessment, graded, roadmap, course)
 
 
 if __name__ == "__main__":

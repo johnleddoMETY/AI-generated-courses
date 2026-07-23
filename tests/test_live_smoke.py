@@ -19,7 +19,7 @@ def test_live_full_pipeline_smoke() -> None:
             for question in assessment.questions
         ]
 
-    syllabus, assessment, graded, roadmap = run_full_pipeline(
+    syllabus, assessment, graded, roadmap, course = run_full_pipeline(
         "Cloud Architecture",
         "AWS Solutions Architect Associate SAA-C03",
         answer_provider,
@@ -30,3 +30,7 @@ def test_live_full_pipeline_smoke() -> None:
     assert len(assessment.questions) == 4
     assert len(graded.question_results) == 4
     assert roadmap.items or roadmap.skipped_domains
+    assert len(course.lessons) == len(roadmap.items)
+    if course.lessons:
+        assert course.lessons[0].sections
+        assert course.lessons[0].practice_questions
