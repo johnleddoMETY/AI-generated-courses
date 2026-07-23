@@ -72,3 +72,20 @@ class Roadmap(models.Model):
 
     def __str__(self) -> str:
         return f"Roadmap {self.roadmap_id}"
+
+
+class Course(models.Model):
+    """No security stripping needed: unlike Assessment, Lesson content
+    (including practice_questions) is meant to be shown to the client
+    whole — nothing here is scored.
+    """
+
+    course_id = models.CharField(primary_key=True, max_length=36)
+    roadmap = models.ForeignKey(
+        Roadmap, on_delete=models.CASCADE, to_field="roadmap_id", related_name="courses"
+    )
+    payload = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"Course {self.course_id}"

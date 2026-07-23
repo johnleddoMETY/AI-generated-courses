@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from courses.models import Assessment, GradedAssessment, Roadmap, Syllabus
+from courses.models import Assessment, Course, GradedAssessment, Roadmap, Syllabus
 
 
 @admin.register(Syllabus)
@@ -22,3 +22,8 @@ class GradedAssessmentAdmin(admin.ModelAdmin):
 @admin.register(Roadmap)
 class RoadmapAdmin(admin.ModelAdmin):
     list_display = ("roadmap_id", "assessment", "syllabus", "created_at")
+
+
+@admin.register(Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = ("course_id", "roadmap", "created_at")

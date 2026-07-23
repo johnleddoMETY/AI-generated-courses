@@ -3,9 +3,14 @@ from datetime import datetime, timezone
 import pytest
 from llm_engine import (
     Assessment,
+    Course,
     DomainScore,
     ExamDomain,
     GradedAssessment,
+    Lesson,
+    LessonExample,
+    LessonPracticeQuestion,
+    LessonSection,
     Question,
     QuestionOption,
     QuestionResult,
@@ -166,5 +171,45 @@ def sample_roadmap(sample_assessment: Assessment, sample_syllabus: Syllabus) -> 
         total_estimated_hours=2.0,
         weekly_plan=None,
         guidance_summary="Focus on security fundamentals.",
+        created_at=datetime.now(timezone.utc),
+    )
+
+
+@pytest.fixture
+def sample_course(sample_roadmap: Roadmap) -> Course:
+    return Course(
+        course_id="66666666-6666-6666-6666-666666666666",
+        roadmap_id=sample_roadmap.roadmap_id,
+        topic=sample_roadmap.topic,
+        certification=sample_roadmap.certification,
+        lessons=[
+            Lesson(
+                lesson_id="77777777-7777-7777-7777-777777777777",
+                item_id=sample_roadmap.items[0].item_id,
+                title="AWS IAM Fundamentals",
+                sections=[
+                    LessonSection(
+                        heading="What is IAM?",
+                        body_markdown="IAM lets you manage access to AWS services and resources.",
+                    )
+                ],
+                examples=[
+                    LessonExample(
+                        scenario="A team needs read-only access to an S3 bucket.",
+                        walkthrough="Create an IAM policy granting s3:GetObject and attach it to a group.",
+                    )
+                ],
+                practice_questions=[
+                    LessonPracticeQuestion(
+                        question="What AWS service manages user permissions?",
+                        answer="IAM",
+                        explanation="IAM (Identity and Access Management) controls who can do what.",
+                    )
+                ],
+                summary="IAM governs authentication and authorization in AWS.",
+                created_at=datetime.now(timezone.utc),
+            )
+        ],
+        total_estimated_hours=2.0,
         created_at=datetime.now(timezone.utc),
     )

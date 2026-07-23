@@ -3,6 +3,8 @@ from django.urls import path
 from courses.views import (
     AssessmentCreateView,
     AssessmentRetrieveView,
+    CourseCreateView,
+    CourseRetrieveView,
     GradeAssessmentView,
     RoadmapCreateView,
     SyllabusCreateView,
@@ -29,5 +31,15 @@ urlpatterns = [
         "assessment/<str:assessment_id>/roadmap/",
         RoadmapCreateView.as_view(),
         name="roadmap-create",
+    ),
+    path(
+        "roadmap/<str:roadmap_id>/course/",
+        CourseCreateView.as_view(),
+        name="course-create",
+    ),
+    path(
+        "course/<str:course_id>/",
+        CourseRetrieveView.as_view(),
+        name="course-retrieve",
     ),
 ]

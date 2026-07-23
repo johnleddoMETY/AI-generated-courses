@@ -1,4 +1,4 @@
-"""HTTP views for the 4-stage llm_engine pipeline.
+"""HTTP views for the 5-stage llm_engine pipeline.
 
 Each view's job is persistence + HTTP shaping only — pipeline logic
 (allocation math, grading, gap-targeting) stays inside llm_engine. Views
@@ -19,8 +19,12 @@ from llm_engine import (
     Syllabus as SyllabusModel,
 )
 from llm_engine import (
+    Roadmap as RoadmapModel,
+)
+from llm_engine import (
     UserAnswer,
     generate_assessment,
+    generate_course,
     generate_roadmap,
     generate_syllabus,
     grade_assessment,
@@ -30,7 +34,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from courses.models import Assessment, GradedAssessment, Roadmap, Syllabus
+from courses.models import Assessment, Course, GradedAssessment, Roadmap, Syllabus
 from courses.serializers import (
     AssessmentCreateRequestSerializer,
     GradeRequestSerializer,
@@ -125,3 +129,33 @@ class RoadmapCreateView(APIView):
             payload=payload,
         )
         return Response(payload, status=status.HTTP_201_CREATED)
+
+
+class CourseCreateView(APIView):
+    """Generates one lesson per roadmap item, sequentially, one LLM call each.
+
+    NOTE: this runs synchronously inside the request like the other four
+    endpoints, but it is far slower (README: "treat it as a background
+    job, not something to run inside a request/response cycle"). Fine for
+    now; swap to a background task queue before this is client-facing.
+    """
+
+    def post(self, request: Request, roadmap_id: str) -> Response:
+        roadmap_row = get_object_or_404(Roadmap, roadmap_id=roadmap_id)
+        roadmap = RoadmapModel.model_validate(roadmap_row.payload)
+
+        course = generate_course(roadmap)
+
+        payload = course.model_dump(mode="json")
+        Course.objects.create(
+            course_id=course.course_id,
+            roadmap=roadmap_row,
+            payload=payload,
+        )
+        return Response(payload, status=status.HTTP_201_CREATED)
+
+
+class CourseRetrieveView(APIView):
+    def get(self, request: Request, course_id: str) -> Response:
+        course_row = get_object_or_404(Course, course_id=course_id)
+        return Response(course_row.payload)

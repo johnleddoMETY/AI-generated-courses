@@ -44,40 +44,57 @@ backend/
 
 ## Running it
 
-1. Start MySQL (root `docker-compose.yml` spins up a local instance):
+1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+   (or any Docker runtime) and make sure it's running.
+2. Start MySQL — the root `docker-compose.yml` spins up a local instance,
+   no local MySQL install needed:
    ```bash
    docker compose up -d mysql
    ```
-2. Copy env vars — Django reads the repo-root `.env`, so add the keys
+3. Copy env vars — Django reads the repo-root `.env`, so add the keys
    documented in `backend/.env.example` (Django secret key, debug flag,
    allowed hosts, MySQL credentials, CORS origins) alongside the existing
    `LLM_*` / `OPENAI_API_KEY` vars.
-3. Migrate and run:
+4. Migrate and run:
    ```bash
    cd backend
    python manage.py migrate
    python manage.py runserver
    ```
-4. Optionally walk the whole pipeline against the running server:
+5. Optionally walk the whole pipeline against the running server:
    ```bash
    ./demo_api.sh
    ```
 
+**Running the test suite against this container:** `pytest` spins up its
+own `test_<db>` database per run. The default `llm_engine` MySQL user
+(created by the official `mysql` image from `MYSQL_USER`/`MYSQL_PASSWORD`)
+only has privileges on the `llm_engine` database, not on arbitrary
+databases, so the first time you run tests you need to grant it rights on
+the test DB too:
+```bash
+docker exec ai-generated-courses-mysql-1 mysql -uroot -proot -e \
+  "GRANT ALL PRIVILEGES ON \`test_llm_engine\`.* TO 'llm_engine'@'%'; FLUSH PRIVILEGES;"
+```
+(swap `-proot` for your `MYSQL_ROOT_PASSWORD` if you changed it from the
+`docker-compose.yml` default). One-time setup per fresh container.
+
 ## Data model
 
 Every pipeline object (`Syllabus`, `Assessment`, `GradedAssessment`,
-`Roadmap`) is stored as one row keyed on the same UUID `llm_engine`
-already generates for it. The full `model_dump(mode="json")` of the
-object goes into a `payload` JSON column; a handful of fields are pulled
-out as real columns purely so they're queryable/joinable. Before a stored
-object goes back into an `llm_engine` service function, it's rebuilt with
-`Model.model_validate(row.payload)`.
+`Roadmap`, `Course`) is stored as one row keyed on the same UUID
+`llm_engine` already generates for it. The full `model_dump(mode="json")`
+of the object goes into a `payload` JSON column; a handful of fields are
+pulled out as real columns purely so they're queryable/joinable. Before a
+stored object goes back into an `llm_engine` service function, it's
+rebuilt with `Model.model_validate(row.payload)`.
 
 ```
 Syllabus(syllabus_id, topic, certification, exam_code, payload)
   └── Assessment(assessment_id, syllabus FK, payload)
         ├── GradedAssessment(assessment FK/PK, payload)
         └── Roadmap(roadmap_id, assessment FK, syllabus FK, payload)
+              └── Course(course_id, roadmap FK, payload)
 ```
 
 **Security rule:** `Assessment.payload` includes `correct_option_id` and
@@ -99,6 +116,8 @@ All endpoints live under `/api/` (see `courses/urls.py`).
 | `GET` | `/api/assessment/<assessment_id>/` | Fetch a stored assessment (answer key stripped) |
 | `POST` | `/api/assessment/<assessment_id>/grade/` | Grade submitted answers against the server-stored assessment |
 | `POST` | `/api/assessment/<assessment_id>/roadmap/` | Generate a gap-targeted study roadmap from grading results |
+| `POST` | `/api/roadmap/<roadmap_id>/course/` | Generate a full text course (one lesson per roadmap item) |
+| `GET` | `/api/course/<course_id>/` | Fetch a stored course |
 
 ### `POST /api/syllabus/`
 ```json
@@ -134,6 +153,24 @@ and proficiency), `201`.
 Requires a `GradedAssessment` to already exist for that assessment.
 Returns the `Roadmap` payload, `201`.
 
+### `POST /api/roadmap/<roadmap_id>/course/`
+No request body. Generates one lesson per roadmap item, sequentially —
+this is by far the slowest and most expensive call in the pipeline (one
+LLM call per item, "textbook-length" output each). Returns the full
+`Course` payload, `201`.
+
+> **Caveat:** this currently runs synchronously inside the request, same
+> as the other four endpoints, purely to match the existing pattern. The
+> pipeline README explicitly recommends treating course generation as a
+> background job instead — worth moving to one (e.g. Celery/RQ) before
+> this is client-facing, so a slow/failed generation doesn't hold open an
+> HTTP connection.
+
+### `GET /api/course/<course_id>/`
+Returns the stored `Course` payload, `200`. No stripping needed here —
+unlike `Assessment`, `Lesson.practice_questions` are open-ended study
+material meant to be shown with their answers.
+
 ## Request validation & error handling
 
 - Every endpoint validates its request body through a DRF `Serializer` in
@@ -150,10 +187,10 @@ Returns the `Roadmap` payload, `201`.
 
 ## Admin
 
-All four models are registered in `courses/admin.py`, giving a
+All five models are registered in `courses/admin.py`, giving a
 browsable/searchable view of every stored syllabus, assessment, graded
-result, and roadmap at `/admin/` — useful for debugging without writing
-any throwaway scripts.
+result, roadmap, and course at `/admin/` — useful for debugging without
+writing any throwaway scripts.
 
 ## Tests
 
@@ -162,12 +199,14 @@ cd backend
 pytest
 ```
 
-`courses/tests/` covers all four endpoints
+`courses/tests/` covers all five endpoints
 (`test_syllabus_api.py`, `test_assessment_api.py`, `test_grading_api.py`,
-`test_roadmap_api.py`), with shared fixtures in `tests/conftest.py`
-building fake `llm_engine` objects and an isolated `APIClient` (LLM-related
-env vars are cleared per-test so real credentials never leak into test
-runs).
+`test_roadmap_api.py`, `test_course_api.py`), with shared fixtures in
+`tests/conftest.py` building fake `llm_engine` objects and an isolated
+`APIClient` (LLM-related env vars are cleared per-test so real
+credentials never leak into test runs). See the "Running the test suite"
+note above for the one-time MySQL grant needed against the Docker
+container.
 
 ## Known gaps / next steps
 
@@ -175,13 +214,9 @@ runs).
   Needed before this is multi-user safe.
 - No list endpoints (e.g. "all syllabuses for a user") — only
   create/retrieve by ID.
-- The `llm_engine` pipeline now has a 5th stage, **course generation**
-  (`generate_course(roadmap) -> Course`), added after this backend was
-  built. It isn't wired up here yet. Per the pipeline README, it's a
-  slow, expensive call (one LLM call per roadmap item) and should run as
-  a background job rather than inside a synchronous request — unlike
-  `Assessment`, `Lesson` content has no answer key to strip and is safe
-  to return to the client whole.
+- Course generation (`POST /api/roadmap/<roadmap_id>/course/`) runs
+  synchronously — see the caveat under that endpoint above. Should move
+  to a background job queue before it's client-facing.
 - Django is running via `manage.py runserver`; only MySQL is
   containerized so far (`docker-compose.yml`) — the Django app itself
   isn't in that compose file yet.
