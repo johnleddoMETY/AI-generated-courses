@@ -1,54 +1,102 @@
 {
-  "assessment_id": "b9889186-cdc3-4fc7-a91b-e6e6893e1dda",
-  "overall_score_percent": 57.0,
+  "assessment_id": "697874f8-ef15-4537-9eae-d359f23acb6d",
+  "overall_score_percent": 27.7,
   "question_results": [
     {
-      "question_id": "6d2c497f-ce26-4f21-9e2e-fe4b9396dc26",
+      "question_id": "2596ee76-5b4d-462e-a018-d2e28230242a",
       "domain_id": "design-resilient-architectures",
-      "correct": true,
-      "selected_option_id": "A",
-      "correct_option_id": "A",
-      "explanation": "The correct answer is A: Amazon EC2 Auto Scaling, which automatically adjusts the number of EC2 instances in response to traffic demands, ensuring high availability. \n\nB: Amazon S3 is primarily for object storage and does not directly provide high availability for web applications. \n\nC: AWS Lambda is a serverless computing service that can handle spikes in traffic but may not be suitable for all web applications, particularly those requiring persistent states. \n\nD: Amazon RDS provides managed database services but does not directly contribute to the high availability of the web application itself."
+      "correct": false,
+      "selected_option_id": "D",
+      "correct_option_id": "C",
+      "explanation": "Elastic Load Balancing (ELB) is designed to distribute incoming application traffic across multiple targets, ensuring high availability and fault tolerance by routing traffic to healthy instances across different Availability Zones. \n\nOption A, Amazon CloudFront, is a content delivery network (CDN) that caches content, but it does not directly distribute traffic across EC2 instances. \n\nOption B, Amazon Route 53, is a DNS service that can route traffic based on DNS queries but does not handle load balancing directly. \n\nOption D, Amazon S3, is an object storage service that does not distribute traffic."
     },
     {
-      "question_id": "685889ef-cdaa-4c8b-9e8e-6d3db2b14497",
+      "question_id": "3dbd76c8-1436-412d-98c2-ca212ad6a25e",
+      "domain_id": "design-resilient-architectures",
+      "correct": false,
+      "selected_option_id": "D",
+      "correct_option_id": "B",
+      "explanation": "Using Auto Scaling groups for each component deployed across multiple Availability Zones allows the application to automatically replace unhealthy instances and scale in response to demand, ensuring fault tolerance and quick recovery from failures.\n\nOption A is incorrect because having a single instance in different regions does not provide fault tolerance; if that instance fails, the application will not be available. \n\nOption C is incorrect because while Amazon S3 is suitable for storing data, it does not provide the necessary architecture for application availability and fault tolerance. \n\nOption D is incorrect because deploying in a single Availability Zone increases the risk of downtime due to localized failures."
+    },
+    {
+      "question_id": "e1bd0904-2a65-45f7-b991-32d601aee471",
+      "domain_id": "design-resilient-architectures",
+      "correct": false,
+      "selected_option_id": "D",
+      "correct_option_id": "A",
+      "explanation": "An Active-Active failover across multiple regions allows both regions to handle traffic simultaneously, providing resilience and quick recovery in the event of a region-wide outage. \n\nOption B, a backup and restore strategy, does not provide real-time availability and may result in extended downtime. \n\nOption C, Multi-Region Active-Passive failover, involves one region being active while the other remains on standby, which could lead to longer recovery times during an outage. \n\nOption D, using a single region with Auto Scaling, does not provide resilience to regional failures."
+    },
+    {
+      "question_id": "9f30f31c-4f85-406f-83ee-8e57aab4e0a3",
       "domain_id": "design-resilient-architectures",
       "correct": false,
       "selected_option_id": "A",
       "correct_option_id": "B",
-      "explanation": "The correct answer is B: Using Elastic Load Balancing and deploying instances across multiple Availability Zones ensures that if one zone fails, the application remains available via instances in other zones. \n\nA: Deploying all components in a single Availability Zone does not provide fault tolerance, as a failure in that zone would cause the entire application to go down. \n\nC: A single Amazon RDS instance can become a single point of failure; for fault tolerance, a multi-AZ deployment is recommended. \n\nD: A static IP does not contribute to fault tolerance; it simply provides a fixed address for accessing resources."
+      "explanation": "Amazon SQS (Simple Queue Service) is a fully managed message queuing service that helps decouple components of an application, allowing requests to be queued and processed independently, ensuring reliability during traffic spikes. \n\nOption A, Amazon EC2, provides compute resources but does not inherently decouple components. \n\nOption C, Amazon RDS, is a database service and does not provide message queuing capabilities. \n\nOption D, AWS Lambda, is a serverless compute service but does not provide queuing; it can process requests but is not designed for decoupling."
     },
     {
-      "question_id": "82f62179-e77c-4646-a328-0d4e540e9cc1",
+      "question_id": "d548edd9-bfcd-450e-ae59-ce818a7c54b5",
       "domain_id": "design-high-performing-architectures",
-      "correct": false,
-      "selected_option_id": "A",
-      "correct_option_id": "B",
-      "explanation": "The correct answer is B: Using Amazon ElastiCache allows you to cache frequently accessed data, significantly improving read performance for read-heavy workloads. \n\nA: While a multi-AZ deployment improves availability, it does not specifically optimize for read performance. \n\nC: Regular backups to Amazon S3 are important for data durability but do not directly enhance performance. \n\nD: Increasing the instance size may help, but it doesn't address caching, which is crucial for optimizing read-heavy workloads."
-    },
-    {
-      "question_id": "ad89a225-6d70-4fe8-9afb-9e84c6df8eee",
-      "domain_id": "design-high-performing-architectures",
-      "correct": false,
-      "selected_option_id": "C",
-      "correct_option_id": "A",
-      "explanation": "The correct answer is A: Amazon DynamoDB is a fully managed NoSQL database service that provides low-latency access and is designed for high scalability. \n\nB: Amazon RDS is a relational database service and is not optimized for NoSQL use cases. \n\nC: Amazon Aurora is a relational database compatible with MySQL and PostgreSQL and is not suitable for NoSQL workloads. \n\nD: Amazon Redshift is a data warehousing service, not suitable for real-time low-latency access."
-    },
-    {
-      "question_id": "cb57b888-7fc3-4200-8984-ef3db8a6c69d",
-      "domain_id": "design-secure-applications-and-architectures",
-      "correct": true,
-      "selected_option_id": "A",
-      "correct_option_id": "A",
-      "explanation": "The correct answer is A: AWS Identity and Access Management (IAM) allows you to manage user identities and control access to AWS resources, which is essential for compliance with data protection regulations. \n\nB: Amazon CloudFront is a content delivery network and does not manage user identities. \n\nC: AWS Lambda is a serverless compute service that does not provide identity management. \n\nD: Amazon S3 is an object storage service, and while it has access controls, it does not manage identities."
-    },
-    {
-      "question_id": "f04cadd7-4bf1-4511-8a6d-958ff431646d",
-      "domain_id": "design-cost-optimized-architectures",
       "correct": true,
       "selected_option_id": "B",
       "correct_option_id": "B",
-      "explanation": "The correct answer is B: Implementing Reserved Instances for steady-state usage allows you to save significantly on costs compared to on-demand pricing while maintaining performance. \n\nA: Switching to on-demand instances can increase costs, especially for long-term workloads. \n\nC: Using the highest instance types for all applications is not cost-effective and may lead to unnecessary expenses. \n\nD: Disabling auto-scaling can lead to performance issues during traffic spikes and does not effectively manage costs."
+      "explanation": "Amazon ElastiCache is specifically designed for in-memory caching, which helps improve application performance by reducing the load on databases through caching frequently accessed data. \n\nOption A, Amazon RDS, is a relational database service and is not an in-memory cache. \n\nOption C, Amazon S3, is an object storage service and does not provide caching capabilities. \n\nOption D, Amazon DynamoDB, is a NoSQL database service and while it can be performant, it does not serve as an in-memory cache."
+    },
+    {
+      "question_id": "e0fe9f64-c130-40e9-b7d8-c5c7d8364776",
+      "domain_id": "design-high-performing-architectures",
+      "correct": false,
+      "selected_option_id": "A",
+      "correct_option_id": "D",
+      "explanation": "In-memory caching with Amazon ElastiCache allows for rapid access to frequently requested data, significantly improving response times and reducing the load on the database during high read traffic periods. \n\nOption A, client-side caching, can be beneficial but does not address server-side performance directly. \n\nOption B, database replication, can enhance availability and fault tolerance but does not specifically reduce load on a single database instance for read traffic. \n\nOption C, CDN caching, is effective for static content but may not be suitable for dynamic data that changes frequently."
+    },
+    {
+      "question_id": "e66b952c-5dd1-46a8-bcc2-18573f8b9aab",
+      "domain_id": "design-high-performing-architectures",
+      "correct": true,
+      "selected_option_id": "B",
+      "correct_option_id": "B",
+      "explanation": "Amazon DynamoDB is a fully managed NoSQL database service designed for low-latency reads and writes, making it ideal for applications that require high performance at scale. \n\nOption A, Amazon RDS with read replicas, can improve read performance but may still introduce latency due to the nature of relational databases. \n\nOption C, Amazon Aurora, is a relational database that provides good performance but is not specifically optimized for the low-latency requirements of NoSQL workloads. \n\nOption D, Amazon Redshift, is a data warehouse solution optimized for analytical queries rather than transactional workloads."
+    },
+    {
+      "question_id": "90efdc76-c98e-4205-8af1-6d4f3d8e3024",
+      "domain_id": "design-secure-applications-and-architectures",
+      "correct": false,
+      "selected_option_id": "D",
+      "correct_option_id": "B",
+      "explanation": "AWS IAM (Identity and Access Management) is the service that allows you to manage user identities and permissions for AWS resources, ensuring secure access control. \n\nOption A, AWS CloudTrail, is used for logging and monitoring API calls but does not manage identities directly. \n\nOption C, Amazon S3, is an object storage service and does not handle identity management. \n\nOption D, Amazon VPC, is a networking service that does not manage user identities."
+    },
+    {
+      "question_id": "6cd8f1cc-146e-4c3a-8163-9ba8f071c32f",
+      "domain_id": "design-secure-applications-and-architectures",
+      "correct": false,
+      "selected_option_id": "D",
+      "correct_option_id": "B",
+      "explanation": "Enabling server-side encryption with S3-managed keys ensures that the data stored in Amazon S3 is encrypted at rest, providing a strong layer of security for sensitive data. \n\nOption A is incorrect as storing data in a public bucket exposes it to unauthorized access. \n\nOption C, while useful for performance, does not provide security for the data itself. \n\nOption D is incorrect because allowing all users access through IAM policies compromises data security."
+    },
+    {
+      "question_id": "4fbee267-9303-4ab5-a3ee-22a6bd34713d",
+      "domain_id": "design-secure-applications-and-architectures",
+      "correct": false,
+      "selected_option_id": "D",
+      "correct_option_id": "B",
+      "explanation": "Implementing encryption for data at rest and in transit is critical for meeting strict regulatory requirements for data protection, ensuring that sensitive information is secure both when stored and during transmission. \n\nOption A is incorrect as not configuring additional security measures would likely lead to non-compliance. \n\nOption C does not address compliance and may expose data to risks associated with regional outages. \n\nOption D, enabling versioning on S3 buckets, is a good practice for data recovery but does not directly address regulatory compliance."
+    },
+    {
+      "question_id": "be765d65-f6da-4145-bc99-3be53e3be57c",
+      "domain_id": "design-cost-optimized-architectures",
+      "correct": true,
+      "selected_option_id": "A",
+      "correct_option_id": "A",
+      "explanation": "AWS Cost Explorer allows you to visualize, understand, and manage your AWS costs and usage over time, making it an effective tool for cost monitoring. \n\nOption B, AWS CloudFormation, is a service for deploying infrastructure as code and does not monitor costs. \n\nOption C, AWS IAM, manages user identities and permissions but does not provide cost monitoring capabilities. \n\nOption D, Amazon RDS, is a database service and is not designed for cost monitoring."
+    },
+    {
+      "question_id": "94b4908c-3674-49b7-9631-5585b524f06a",
+      "domain_id": "design-cost-optimized-architectures",
+      "correct": false,
+      "selected_option_id": "A",
+      "correct_option_id": "B",
+      "explanation": "Utilizing Reserved Instances for predictable workloads allows you to save significantly on costs compared to on-demand pricing, making it a key strategy for cost optimization. \n\nOption A is incorrect because provisioning resources at maximum capacity can lead to unnecessary costs. \n\nOption C, using only on-demand instances, may be more expensive for predictable workloads compared to reserved options. \n\nOption D is incorrect as deploying resources in multiple regions without analysis can lead to higher costs without providing any benefits."
     }
   ],
   "domain_scores": [
@@ -56,66 +104,78 @@
       "domain_id": "design-resilient-architectures",
       "domain_name": "Design Resilient Architectures",
       "weight_percent": 30.0,
-      "questions_total": 2,
-      "questions_correct": 1,
-      "score_percent": 50.0,
-      "proficiency": "developing"
-    },
-    {
-      "domain_id": "design-high-performing-architectures",
-      "domain_name": "Design High-Performing Architectures",
-      "weight_percent": 28.0,
-      "questions_total": 2,
+      "questions_total": 4,
       "questions_correct": 0,
       "score_percent": 0.0,
       "proficiency": "weak"
     },
     {
+      "domain_id": "design-high-performing-architectures",
+      "domain_name": "Design High-Performing Architectures",
+      "weight_percent": 28.0,
+      "questions_total": 3,
+      "questions_correct": 2,
+      "score_percent": 66.7,
+      "proficiency": "developing"
+    },
+    {
       "domain_id": "design-secure-applications-and-architectures",
       "domain_name": "Design Secure Applications and Architectures",
       "weight_percent": 24.0,
-      "questions_total": 1,
-      "questions_correct": 1,
-      "score_percent": 100.0,
-      "proficiency": "proficient"
+      "questions_total": 3,
+      "questions_correct": 0,
+      "score_percent": 0.0,
+      "proficiency": "weak"
     },
     {
       "domain_id": "design-cost-optimized-architectures",
       "domain_name": "Design Cost-Optimized Architectures",
       "weight_percent": 18.0,
-      "questions_total": 1,
+      "questions_total": 2,
       "questions_correct": 1,
-      "score_percent": 100.0,
-      "proficiency": "proficient"
+      "score_percent": 50.0,
+      "proficiency": "developing"
     }
   ],
   "gaps": [
     {
       "domain_id": "design-resilient-architectures",
-      "gap_summary": "confuses effective fault tolerance strategies for multi-tier applications, opting for a single Availability Zone instead of utilizing Elastic Load Balancing across multiple zones.",
-      "severity": "moderate",
-      "evidence_question_ids": [
-        "685889ef-cdaa-4c8b-9e8e-6d3db2b14497"
-      ]
-    },
-    {
-      "domain_id": "design-high-performing-architectures",
-      "gap_summary": "lacks understanding of optimization strategies for read-heavy workloads, incorrectly selecting a multi-AZ deployment instead of caching with Amazon ElastiCache.",
+      "gap_summary": "Confuses the role of Elastic Load Balancing with Amazon S3 in distributing traffic for high availability.",
       "severity": "critical",
       "evidence_question_ids": [
-        "82f62179-e77c-4646-a328-0d4e540e9cc1"
+        "2596ee76-5b4d-462e-a018-d2e28230242a",
+        "3dbd76c8-1436-412d-98c2-ca212ad6a25e",
+        "e1bd0904-2a65-45f7-b991-32d601aee471",
+        "9f30f31c-4f85-406f-83ee-8e57aab4e0a3"
       ]
     },
     {
-      "domain_id": "design-high-performing-architectures",
-      "gap_summary": "misidentifies the appropriate NoSQL database service for low-latency access, choosing Amazon Aurora instead of Amazon DynamoDB.",
+      "domain_id": "design-secure-applications-and-architectures",
+      "gap_summary": "Lacks understanding of AWS IAM's role in managing user identities and permissions, confusing it with Amazon VPC.",
+      "severity": "critical",
+      "evidence_question_ids": [
+        "90efdc76-c98e-4205-8af1-6d4f3d8e3024"
+      ]
+    },
+    {
+      "domain_id": "design-secure-applications-and-architectures",
+      "gap_summary": "Misunderstands data protection strategies in S3, confusing encryption with public access settings.",
       "severity": "moderate",
       "evidence_question_ids": [
-        "ad89a225-6d70-4fe8-9afb-9e84c6df8eee"
+        "6cd8f1cc-146e-4c3a-8163-9ba8f071c32f",
+        "4fbee267-9303-4ab5-a3ee-22a6bd34713d"
+      ]
+    },
+    {
+      "domain_id": "design-cost-optimized-architectures",
+      "gap_summary": "Confuses cost optimization strategies, incorrectly believing that provisioning at maximum capacity minimizes costs.",
+      "severity": "moderate",
+      "evidence_question_ids": [
+        "94b4908c-3674-49b7-9631-5585b524f06a"
       ]
     }
   ],
-  "diagnostic_summary": "The learner exhibits a solid understanding of secure and cost-optimized architectures, but there are critical gaps in high-performing architecture concepts, particularly regarding database optimization strategies. This indicates a need for focused review in performance-related topics to ensure readiness for the certification exam.",
-  "strengths_summary": "The learner demonstrates proficiency in designing secure applications and cost-optimized architectures, successfully answering all related questions correctly.",
-  "graded_at": "2026-07-12T14:39:51.384203Z"
+  "diagnostic_summary": "The learner exhibits critical gaps in foundational concepts across multiple domains, particularly in resilient and secure architectures. These misunderstandings could significantly hinder their ability to tackle more advanced topics and effectively prepare for the certification exam.",
+  "strengths_summary": "The learner demonstrates a developing understanding of high-performing architectures, successfully identifying the use of Amazon ElastiCache for in-memory caching and correctly answering questions related to cost monitoring with AWS Cost Explorer.",
+  "graded_at": "2026-07-13T00:48:34.047757Z"
 }
