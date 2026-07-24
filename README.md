@@ -51,10 +51,11 @@ python demo_cli.py --topic "Cloud Architecture" \
 Flags: `--random-answers` (non-interactive), `--json-out artifacts/` (dump
 every stage's JSON — use these as your example payloads).
 
-Expect the demo to take several minutes. Stage 5 writes a full lesson per
-roadmap item, one call each, and is by far the longest stage — it logs
+Expect the demo to take a couple minutes. Stage 5 writes a full lesson per
+roadmap item, one call each, run concurrently via a thread pool — it logs
 `Generating lesson 2/6: <title>` per lesson at INFO so you can watch it
-progress rather than wonder whether it hung.
+progress rather than wonder whether it hung (lines may interleave across
+lessons since they run in parallel).
 
 Run tests (no API key needed; the live test auto-skips):
 
@@ -101,15 +102,16 @@ the four-stage pipeline, this is everything that affects you:
 
 5. **Cost and latency change shape.** The first four stages are a fixed 4
    LLM calls. Course generation is one call per roadmap item (typically
-   3–8, since proficient domains are already skipped), run sequentially,
-   producing a full textbook-length lesson each. This is by far the
-   slowest and most expensive stage — treat it as a background job, not
-   something to run inside a request/response cycle.
+   3–8, since proficient domains are already skipped), run concurrently
+   via a thread pool, producing a full textbook-length lesson each. This
+   is still by far the slowest and most expensive stage — treat it as a
+   background job, not something to run inside a request/response cycle.
 
 6. **Fail-fast, so retry the whole call.** If any single lesson fails,
-   the exception propagates and no partial `Course` comes back. There is
-   no partial state to reconcile — just re-call `generate_course` with
-   the same roadmap.
+   the exception propagates and no partial `Course` comes back. Lessons
+   already in flight when the failure surfaces are not cancelled, but
+   their results are discarded either way. There is no partial state to
+   reconcile — just re-call `generate_course` with the same roadmap.
 
 ## API reference
 
@@ -306,16 +308,21 @@ answer + explanation) — deliberately **not** the MCQ format used by
 `Assessment`, since they are for study reinforcement, not scored
 diagnosis. They carry no answer key to strip.
 
-Fans out one LLM call per roadmap item and is fail-fast: if any single
-lesson fails, the exception propagates and no partial `Course` is
-returned. Lesson count therefore always equals `len(roadmap.items)`.
-`total_estimated_hours` is copied from the roadmap's item hours, not
-re-estimated.
+Fans out one LLM call per roadmap item via a thread pool (each lesson is
+an independent call, so this is a latency win, not a CPU one) and is
+fail-fast: if any single lesson fails, the exception propagates and no
+partial `Course` is returned — lessons already in flight are not
+cancelled, but their results are discarded either way. `Course.lessons`
+is always returned in `roadmap.items` order regardless of which lesson
+finished first, and lesson count therefore always equals
+`len(roadmap.items)`. `total_estimated_hours` is copied from the
+roadmap's item hours, not re-estimated.
 
 Progress is logged at INFO on `llm_engine.services.course`
-(`Generating lesson 2/6: <title>`). The raised exception names only the
-task, not the item, so these lines are how you identify which item failed
-in a long run.
+(`Generating lesson 2/6: <title>`). Lines may interleave across lessons
+since they run concurrently. The raised exception names only the task,
+not the item, so these lines are how you identify which item failed in a
+long run.
 
 ### generate_lesson(item, topic, certification) -> Lesson
 
@@ -356,10 +363,13 @@ same `Lesson` shape shown above. One LLM call.
   `(topic, certification)` pair is deterministic enough to cache and share
   across users — cache key on lowercased/trimmed topic+certification.
   First step toward the session-memory feature.
-The first three course-generation hooks below are listed in build order —
-each is easier or safer once the one before it exists. The last two are
-larger, quality-focused initiatives rather than incremental follow-ups.
+The two course-generation hooks below are independent of each other. The
+last two after them are larger, quality-focused initiatives rather than
+incremental follow-ups.
 
+- ~~**Parallel lesson fan-out**~~ — **done.** `generate_course` now fans
+  out lessons via a thread pool instead of a sequential loop; see the
+  `generate_course` API reference above.
 - **Lesson-level regeneration** (mix — llm_engine primitive done, backend
   endpoint not built): `generate_lesson` is exported and every
   `Lesson` carries the `item_id` of the `RoadmapItem` it teaches, so one
@@ -368,14 +378,9 @@ larger, quality-focused initiatives rather than incremental follow-ups.
   that `generate_course` is fail-fast and returns no partial `Course`, so
   failure-repair means running the per-item loop yourself over
   `generate_lesson` and keeping the successes. That is available today
-  and needs no change to this package.
-- **Parallel lesson fan-out** (llm_engine): `generate_lesson` is standalone and shares
-  no state between calls, so the sequential loop in `generate_course` can
-  become a thread pool without touching either function's contract.
-  Purely a latency win — the token cost is identical. Worth doing after
-  the hook above: parallelism means a single failure discards every
-  lesson already in flight, and being able to salvage individual lessons
-  is what makes that acceptable.
+  and needs no change to this package. Now more valuable than before:
+  since lesson generation runs in parallel, a late failure discards every
+  lesson already in flight, and this is what makes that acceptable.
 - **Lesson caching** (backend): lessons for the same `(objective, subtopics,
   certification)` are largely reusable across learners. The catch: the
   prompt deliberately grounds each lesson in `why_included`, which is

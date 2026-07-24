@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -51,17 +52,24 @@ def generate_lesson(item: RoadmapItem, topic: str, certification: str) -> Lesson
 def generate_course(roadmap: Roadmap) -> Course:
     """Generate a full text course by fanning out over the roadmap's items.
 
-    One lesson is generated per RoadmapItem, in roadmap.items order
-    (priority order). Fail-fast: if any lesson generation raises, the
-    exception propagates and no partial course is returned. Progress is
-    logged per lesson so a slow or failed fan-out can be located — the
-    raised error itself does not identify which item failed.
+    One lesson is generated per RoadmapItem, via a thread pool (each lesson
+    is an independent LLM call, so this is a latency win, not a CPU one).
+    Results are returned in roadmap.items order (priority order) regardless
+    of completion order. Fail-fast: if any lesson generation raises, the
+    exception propagates and no partial course is returned — other lessons
+    already in flight are not cancelled. Progress is logged per lesson so a
+    slow or failed fan-out can be located — the raised error itself does not
+    identify which item failed.
     """
     total = len(roadmap.items)
-    lessons: list[Lesson] = []
-    for position, item in enumerate(roadmap.items, start=1):
+
+    def _generate(indexed_item: tuple[int, RoadmapItem]) -> Lesson:
+        position, item = indexed_item
         logger.info("Generating lesson %d/%d: %s", position, total, item.title)
-        lessons.append(generate_lesson(item, roadmap.topic, roadmap.certification))
+        return generate_lesson(item, roadmap.topic, roadmap.certification)
+
+    with ThreadPoolExecutor(max_workers=total or 1) as executor:
+        lessons = list(executor.map(_generate, enumerate(roadmap.items, start=1)))
 
     return Course(
         course_id=str(uuid4()),
