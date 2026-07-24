@@ -352,7 +352,7 @@ same `Lesson` shape shown above. One LLM call.
 
 ## Future hooks
 
-- **Syllabus caching / cross-user reuse:** `Syllabus` for a normalized
+- **Syllabus caching / cross-user reuse** (backend): `Syllabus` for a normalized
   `(topic, certification)` pair is deterministic enough to cache and share
   across users — cache key on lowercased/trimmed topic+certification.
   First step toward the session-memory feature.
@@ -360,7 +360,8 @@ The first three course-generation hooks below are listed in build order —
 each is easier or safer once the one before it exists. The last two are
 larger, quality-focused initiatives rather than incremental follow-ups.
 
-- **Lesson-level regeneration:** `generate_lesson` is exported and every
+- **Lesson-level regeneration** (mix — llm_engine primitive done, backend
+  endpoint not built): `generate_lesson` is exported and every
   `Lesson` carries the `item_id` of the `RoadmapItem` it teaches, so one
   lesson can be regenerated and swapped into a stored `Course` — for
   refreshing stale content, or for retrying a single failed item. Note
@@ -368,21 +369,22 @@ larger, quality-focused initiatives rather than incremental follow-ups.
   failure-repair means running the per-item loop yourself over
   `generate_lesson` and keeping the successes. That is available today
   and needs no change to this package.
-- **Parallel lesson fan-out:** `generate_lesson` is standalone and shares
+- **Parallel lesson fan-out** (llm_engine): `generate_lesson` is standalone and shares
   no state between calls, so the sequential loop in `generate_course` can
   become a thread pool without touching either function's contract.
   Purely a latency win — the token cost is identical. Worth doing after
   the hook above: parallelism means a single failure discards every
   lesson already in flight, and being able to salvage individual lessons
   is what makes that acceptable.
-- **Lesson caching:** lessons for the same `(objective, subtopics,
+- **Lesson caching** (backend): lessons for the same `(objective, subtopics,
   certification)` are largely reusable across learners. The catch: the
   prompt deliberately grounds each lesson in `why_included`, which is
   learner-specific ("you scored 25% here"), so a cache key including it
   never hits. Reuse means keying on the non-personalized fields and
   accepting less personalized lessons — a product tradeoff, not a free
   win.
-- **Retrieval-grounded generation (RAG):** many certifications publish an
+- **Retrieval-grounded generation (RAG)** (mix — schema groundwork done in
+  llm_engine, corpus/ingestion/retrieval is backend): many certifications publish an
   official exam guide; many do not — so this is conditional by nature,
   grounding where source material exists and falling back to today's
   generic path where it doesn't. The schema already models that
@@ -405,7 +407,7 @@ larger, quality-focused initiatives rather than incremental follow-ups.
   derivative study material from it is a legal question, not a technical
   one. Worth settling before building the pipeline, since it can rule out
   specific vendors entirely.
-- **Fine-tuned lesson model:** model choice is already per-task and
+- **Fine-tuned lesson model** (llm_engine): model choice is already per-task and
   env-driven (`LLM_MODEL_LESSON`), so a fine-tuned endpoint drops in with
   no code change. Sensible only as a cost play on the lesson task, which
   dominates spend — not for factual grounding, since the pipeline must
