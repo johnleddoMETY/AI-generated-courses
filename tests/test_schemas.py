@@ -14,6 +14,7 @@ from llm_engine.schemas import (
     Question,
     QuestionOption,
     QuestionResult,
+    QuestionTypeWeight,
     Roadmap,
     RoadmapItem,
     SkippedDomain,
@@ -39,6 +40,7 @@ def _syllabus() -> Syllabus:
                 key_topics=["IAM", "network boundaries"],
             )
         ],
+        question_type_mix=[QuestionTypeWeight(question_type="single_answer", weight_percent=100.0)],
         source_note="Official SAA-C03 blueprint.",
         created_at=_NOW,
     )

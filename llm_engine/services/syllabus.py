@@ -50,12 +50,21 @@ def generate_syllabus(topic: str, certification: str) -> Syllabus:
             certification,
         )
 
+    total_type_weight = sum(item.weight_percent for item in llm_response.question_type_mix)
+    if not 90.0 <= total_type_weight <= 110.0:
+        logger.warning(
+            "Syllabus question_type_mix weights sum to %.1f (expected ~100) for certification=%r",
+            total_type_weight,
+            certification,
+        )
+
     return Syllabus(
         syllabus_id=str(uuid4()),
         topic=topic,
         certification=certification,
         exam_code=llm_response.exam_code,
         domains=domains,
+        question_type_mix=llm_response.question_type_mix,
         source_note=llm_response.source_note,
         created_at=datetime.now(timezone.utc),
     )

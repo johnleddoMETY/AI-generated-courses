@@ -42,6 +42,8 @@ from llm_engine.schemas.roadmap import (
 from llm_engine.schemas.syllabus import (
     ExamDomain,
     LLMExamDomain,
+    QuestionType,
+    QuestionTypeWeight,
     Syllabus,
     SyllabusLLMResponse,
 )
@@ -73,6 +75,8 @@ __all__ = [
     "Question",
     "QuestionOption",
     "QuestionResult",
+    "QuestionType",
+    "QuestionTypeWeight",
     "Roadmap",
     "RoadmapItem",
     "RoadmapLLMResponse",
