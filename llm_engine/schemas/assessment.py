@@ -1,19 +1,26 @@
 """Assessment schemas.
 
-LLM-facing models (LLMQuestion etc.) deliberately avoid list-length
-constraints because OpenAI strict structured output rejects
-minItems/maxItems; option count is enforced by post-validation in the
-assessment service. Domain models enforce exactly 4 options.
+LLM-facing models deliberately avoid list-length constraints because
+OpenAI strict structured output rejects minItems/maxItems; option count
+is enforced by post-validation in the assessment service. Domain models
+enforce exactly 4 options for the MCQ question types.
 
-SECURITY: Assessment carries correct_option_id and explanation per
-question. Callers must strip these before exposing questions to end
-users.
+Each question type (single_answer, multi_answer, fill_in_blank,
+full_text) is its own model, tagged by question_type and joined into a
+discriminated union — Question/LLMQuestion are type aliases, not
+classes, so they cannot be called as constructors; build the specific
+per-type model instead.
+
+SECURITY: MCQ questions carry correct_option_id/correct_option_ids;
+fill_in_blank carries accepted_answers; full_text carries rubric.
+explanation is present on all types. Callers must strip these
+answer-revealing fields before exposing questions to end users.
 """
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
@@ -30,15 +37,56 @@ class LLMQuestionOption(BaseModel):
     text: str
 
 
-class LLMQuestion(BaseModel):
-    """One MCQ as returned by the LLM (question_id assigned later in code)."""
+class SingleAnswerLLMQuestion(BaseModel):
+    """One single-correct-answer MCQ as returned by the LLM."""
 
+    question_type: Literal["single_answer"] = "single_answer"
     domain_id: str
     difficulty: Difficulty
     stem: str
     options: list[LLMQuestionOption]
     correct_option_id: OptionID
     explanation: str
+
+
+class MultiAnswerLLMQuestion(BaseModel):
+    """One "select all that apply" MCQ as returned by the LLM."""
+
+    question_type: Literal["multi_answer"] = "multi_answer"
+    domain_id: str
+    difficulty: Difficulty
+    stem: str
+    options: list[LLMQuestionOption]
+    correct_option_ids: list[OptionID]
+    explanation: str
+
+
+class FillInBlankLLMQuestion(BaseModel):
+    """One fill-in-the-blank question as returned by the LLM."""
+
+    question_type: Literal["fill_in_blank"] = "fill_in_blank"
+    domain_id: str
+    difficulty: Difficulty
+    stem: str
+    accepted_answers: list[str]
+    explanation: str
+
+
+class FullTextLLMQuestion(BaseModel):
+    """One free-text/essay question as returned by the LLM."""
+
+    question_type: Literal["full_text"] = "full_text"
+    domain_id: str
+    difficulty: Difficulty
+    stem: str
+    rubric: str
+    explanation: str
+
+
+LLMQuestion = Annotated[
+    SingleAnswerLLMQuestion | MultiAnswerLLMQuestion | FillInBlankLLMQuestion | FullTextLLMQuestion,
+    Field(discriminator="question_type"),
+]
 
 
 class AssessmentLLMResponse(BaseModel):
@@ -54,9 +102,10 @@ class QuestionOption(BaseModel):
     text: str
 
 
-class Question(BaseModel):
-    """One MCQ with its code-assigned UUID."""
+class SingleAnswerQuestion(BaseModel):
+    """One single-correct-answer MCQ with its code-assigned UUID."""
 
+    question_type: Literal["single_answer"] = "single_answer"
     question_id: str
     domain_id: str
     difficulty: Difficulty
@@ -64,6 +113,49 @@ class Question(BaseModel):
     options: list[QuestionOption] = Field(min_length=4, max_length=4)
     correct_option_id: OptionID
     explanation: str
+
+
+class MultiAnswerQuestion(BaseModel):
+    """One "select all that apply" MCQ with its code-assigned UUID."""
+
+    question_type: Literal["multi_answer"] = "multi_answer"
+    question_id: str
+    domain_id: str
+    difficulty: Difficulty
+    stem: str
+    options: list[QuestionOption] = Field(min_length=4, max_length=4)
+    correct_option_ids: list[OptionID]
+    explanation: str
+
+
+class FillInBlankQuestion(BaseModel):
+    """One fill-in-the-blank question with its code-assigned UUID."""
+
+    question_type: Literal["fill_in_blank"] = "fill_in_blank"
+    question_id: str
+    domain_id: str
+    difficulty: Difficulty
+    stem: str
+    accepted_answers: list[str]
+    explanation: str
+
+
+class FullTextQuestion(BaseModel):
+    """One free-text/essay question with its code-assigned UUID."""
+
+    question_type: Literal["full_text"] = "full_text"
+    question_id: str
+    domain_id: str
+    difficulty: Difficulty
+    stem: str
+    rubric: str
+    explanation: str
+
+
+Question = Annotated[
+    SingleAnswerQuestion | MultiAnswerQuestion | FillInBlankQuestion | FullTextQuestion,
+    Field(discriminator="question_type"),
+]
 
 
 class Assessment(BaseModel):
@@ -84,7 +176,15 @@ class Assessment(BaseModel):
 
 
 class UserAnswer(BaseModel):
-    """A learner's answer to one question; None selected_option_id means skipped."""
+    """A learner's answer to one question.
+
+    Exactly one type-specific field is populated, matching the question's
+    question_type: selected_option_id (single_answer), selected_option_ids
+    (multi_answer), or text_answer (fill_in_blank / full_text). All-None
+    means skipped.
+    """
 
     question_id: str
-    selected_option_id: OptionID | None
+    selected_option_id: OptionID | None = None
+    selected_option_ids: list[OptionID] | None = None
+    text_answer: str | None = None
