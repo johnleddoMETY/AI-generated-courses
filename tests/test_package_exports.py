@@ -30,3 +30,8 @@ def test_question_type_api_is_exported() -> None:
     ):
         assert name in llm_engine.__all__, f"{name} missing from __all__"
         assert hasattr(llm_engine, name), f"{name} not importable from llm_engine"
+
+
+def test_grading_schema_additions_are_exported() -> None:
+    assert "FreeTextJudgment" in llm_engine.__all__
+    assert hasattr(llm_engine, "FreeTextJudgment")

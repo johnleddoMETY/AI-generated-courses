@@ -30,6 +30,7 @@ from llm_engine.schemas.course import (
 from llm_engine.schemas.grading import (
     DomainQualitativeNote,
     DomainScore,
+    FreeTextJudgment,
     GradedAssessment,
     GradingDiagnosis,
     KnowledgeGap,
@@ -66,6 +67,7 @@ __all__ = [
     "ExamDomain",
     "FillInBlankLLMQuestion",
     "FillInBlankQuestion",
+    "FreeTextJudgment",
     "FullTextLLMQuestion",
     "FullTextQuestion",
     "GradedAssessment",
