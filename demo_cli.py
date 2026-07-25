@@ -31,6 +31,7 @@ from llm_engine import (
     Course,
     GradedAssessment,
     LLMEngineError,
+    Question,
     Roadmap,
     Syllabus,
     UserAnswer,
@@ -99,13 +100,7 @@ def check_api_key() -> None:
 def collect_answers(assessment: Assessment, random_answers: bool) -> list[UserAnswer]:
     """Interactive one-question-at-a-time answering, or random selection."""
     if random_answers:
-        return [
-            UserAnswer(
-                question_id=question.question_id,
-                selected_option_id=random.choice(["A", "B", "C", "D"]),
-            )
-            for question in assessment.questions
-        ]
+        return [_random_answer(question) for question in assessment.questions]
 
     answers: list[UserAnswer] = []
     for number, question in enumerate(assessment.questions, start=1):
@@ -114,23 +109,43 @@ def collect_answers(assessment: Assessment, random_answers: bool) -> list[UserAn
             Panel(
                 question.stem,
                 title=f"Question {number}/{len(assessment.questions)} "
-                f"[dim]({question.domain_id} · {question.difficulty})[/dim]",
+                f"[dim]({question.domain_id} · {question.difficulty} · {question.question_type})[/dim]",
             )
         )
-        for option in question.options:
-            console.print(f"  [bold]{option.option_id}[/bold]) {option.text}")
-        choice = Prompt.ask(
-            "Answer",
-            choices=["A", "B", "C", "D", "S"],
-            show_choices=True,
-        )
-        answers.append(
-            UserAnswer(
-                question_id=question.question_id,
-                selected_option_id=None if choice == "S" else choice,  # type: ignore[arg-type]
+        if question.question_type in ("single_answer", "multi_answer"):
+            for option in question.options:
+                console.print(f"  [bold]{option.option_id}[/bold]) {option.text}")
+            if question.question_type == "single_answer":
+                choice = Prompt.ask("Answer", choices=["A", "B", "C", "D", "S"], show_choices=True)
+                answers.append(
+                    UserAnswer(
+                        question_id=question.question_id,
+                        selected_option_id=None if choice == "S" else choice,  # type: ignore[arg-type]
+                    )
+                )
+            else:
+                raw = Prompt.ask("Answer(s), e.g. 'A,C', or 'S' to skip")
+                selected = None if raw.strip().upper() == "S" else [c.strip().upper() for c in raw.split(",") if c.strip()]
+                answers.append(
+                    UserAnswer(question_id=question.question_id, selected_option_ids=selected)  # type: ignore[arg-type]
+                )
+        else:
+            text = Prompt.ask("Answer (blank to skip)", default="")
+            answers.append(
+                UserAnswer(question_id=question.question_id, text_answer=text or None)
             )
-        )
     return answers
+
+
+def _random_answer(question: Question) -> UserAnswer:
+    if question.question_type == "single_answer":
+        return UserAnswer(question_id=question.question_id, selected_option_id=random.choice(["A", "B", "C", "D"]))
+    if question.question_type == "multi_answer":
+        k = random.randint(1, len(question.options))
+        picks = random.sample(["A", "B", "C", "D"], k=k)
+        return UserAnswer(question_id=question.question_id, selected_option_ids=picks)  # type: ignore[arg-type]
+    placeholder = random.choice(["Not sure.", "Something related to this topic."])
+    return UserAnswer(question_id=question.question_id, text_answer=placeholder)
 
 
 def show_syllabus(syllabus: Syllabus) -> None:
@@ -170,7 +185,13 @@ def show_results(graded: GradedAssessment) -> None:
         )
     console.print(table)
 
-    skipped = [r for r in graded.question_results if r.selected_option_id is None]
+    skipped = [
+        r
+        for r in graded.question_results
+        if r.selected_option_id is None
+        and not r.selected_option_ids
+        and not r.text_answer
+    ]
     if skipped:
         console.print(f"[dim]{len(skipped)} question(s) skipped (counted incorrect).[/dim]")
 
