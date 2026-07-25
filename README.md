@@ -222,7 +222,7 @@ graded = grade_assessment(assessment, answers)
   ],
   "domain_scores": [
     {"domain_id": "design-secure-architectures", "domain_name": "…",
-     "weight_percent": 30.0, "questions_total": 4, "questions_correct": 2,
+     "weight_percent": 30.0, "questions_total": 4, "questions_correct": 2.0,
      "score_percent": 50.0, "proficiency": "developing"}
   ],
   "gaps": [
@@ -366,9 +366,12 @@ same `Lesson` shape shown above. One LLM call.
    restores with `Model.model_validate_json()` — store them in MySQL JSON
    columns keyed by their `*_id` fields (all UUIDs generated in code, safe
    to key on).
-3. **SECURITY — answer key.** `Assessment` contains `correct_option_id`
-   and `explanation` for every question. You MUST strip these before
-   sending questions to the frontend. When grading, do NOT trust an
+3. **SECURITY — answer key.** Every question in `Assessment` carries
+   `explanation` plus a type-specific answer-revealing field:
+   `correct_option_id` (single_answer), `correct_option_ids`
+   (multi_answer), `accepted_answers` (fill_in_blank), or `rubric`
+   (full_text). You MUST strip all of these before sending questions to
+   the frontend. When grading, do NOT trust an
    assessment sent back by the client — load the stored server-side
    `Assessment` and pass that to `grade_assessment`. This applies to
    `Assessment` only: `Lesson.practice_questions` are study material and
