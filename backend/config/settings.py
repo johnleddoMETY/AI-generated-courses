@@ -21,10 +21,10 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "insecure-dev-key-change-me")
 DEBUG = os.getenv("DJANGO_DEBUG", "true").lower() == "true"
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
 
-# Shared secret Supabase signs its JWTs with (Project Settings > API > JWT
-# Secret). The dev default only works for locally-minted test tokens signed
-# with the same string — never use it against a real Supabase project.
-SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "insecure-dev-secret-change-me")
+# Your Supabase project's URL (Project Settings > API > Project URL).
+# Session tokens are verified against this project's JWKS endpoint
+# (<SUPABASE_URL>/auth/v1/.well-known/jwks.json) — no shared secret needed.
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 
 INSTALLED_APPS = [
     "django.contrib.admin",

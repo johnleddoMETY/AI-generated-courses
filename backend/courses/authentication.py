@@ -1,15 +1,24 @@
 """Supabase JWT verification for DRF.
 
-Login/registration happens entirely on the frontend via supabase-js;
+Login/registration happen entirely on the frontend via supabase-js;
 Django never sees a password, only the JWT Supabase already issued. This
 class verifies that token and identifies the caller — it does not create
 or store a User row. No per-resource ownership checks yet (see the
 "Known gaps" section in backend/README.md); this is purely an
 authenticated-or-not gate applied to every endpoint by default.
+
+Current Supabase projects sign session tokens with an asymmetric key
+(ES256) rotated via a JWKS endpoint, not a static shared secret — so
+verification fetches Supabase's public signing key (via PyJWKClient,
+which caches it) rather than checking against a local secret.
 """
 
 from __future__ import annotations
 
+import ssl
+from functools import lru_cache
+
+import certifi
 import jwt
 from django.conf import settings
 from rest_framework.authentication import BaseAuthentication
@@ -32,6 +41,18 @@ class SupabaseUser:
         return self.email or self.id
 
 
+@lru_cache(maxsize=1)
+def _get_jwks_client() -> jwt.PyJWKClient:
+    # Explicit CA bundle: some Python installs (notably python.org builds on
+    # macOS) don't wire up a working default trust store, which otherwise
+    # fails JWKS fetches with "certificate verify failed."
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
+    return jwt.PyJWKClient(
+        f"{settings.SUPABASE_URL}/auth/v1/.well-known/jwks.json",
+        ssl_context=ssl_context,
+    )
+
+
 class SupabaseJWTAuthentication(BaseAuthentication):
     def authenticate(self, request) -> tuple[SupabaseUser, str] | None:
         header = request.headers.get("Authorization", "")
@@ -40,10 +61,11 @@ class SupabaseJWTAuthentication(BaseAuthentication):
 
         token = header.removeprefix("Bearer ").strip()
         try:
+            signing_key = _get_jwks_client().get_signing_key_from_jwt(token)
             claims = jwt.decode(
                 token,
-                settings.SUPABASE_JWT_SECRET,
-                algorithms=["HS256"],
+                signing_key.key,
+                algorithms=["ES256", "RS256"],
                 audience="authenticated",
             )
         except jwt.PyJWTError as exc:

@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import jwt
 import pytest
-from django.conf import settings
+from cryptography.hazmat.primitives.asymmetric import ec
 from llm_engine import (
     Assessment,
     Course,
@@ -49,11 +49,34 @@ def _clean_llm_env(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(name, raising=False)
 
 
+# Real Supabase projects sign session tokens with an asymmetric key (ES256)
+# verified via a JWKS endpoint. Tests mint their own keypair and monkeypatch
+# the JWKS lookup so auth verification works offline, without a live
+# Supabase project or network access.
+_TEST_PRIVATE_KEY = ec.generate_private_key(ec.SECP256R1())
+_TEST_PUBLIC_KEY = _TEST_PRIVATE_KEY.public_key()
+
+
+class _FakeSigningKey:
+    def __init__(self, key) -> None:
+        self.key = key
+
+
+class _FakeJWKSClient:
+    def get_signing_key_from_jwt(self, token: str) -> _FakeSigningKey:
+        return _FakeSigningKey(_TEST_PUBLIC_KEY)
+
+
+@pytest.fixture(autouse=True)
+def _patch_jwks_client(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("courses.authentication._get_jwks_client", lambda: _FakeJWKSClient())
+
+
 def _make_token(sub: str = "test-user-id", email: str = "test@example.com") -> str:
     return jwt.encode(
         {"sub": sub, "email": email, "aud": "authenticated", "role": "authenticated"},
-        settings.SUPABASE_JWT_SECRET,
-        algorithm="HS256",
+        _TEST_PRIVATE_KEY,
+        algorithm="ES256",
     )
 
 
