@@ -85,3 +85,74 @@ def test_retrieve_course_404_for_unknown_id(api_client):
     response = api_client.get("/api/course/does-not-exist/")
 
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_regenerate_lesson_replaces_matching_item(
+    api_client,
+    sample_syllabus,
+    sample_assessment,
+    sample_graded_assessment,
+    sample_roadmap,
+    sample_course,
+    monkeypatch,
+):
+    roadmap_row = _make_roadmap_row(
+        sample_syllabus, sample_assessment, sample_graded_assessment, sample_roadmap
+    )
+    Course.objects.create(
+        course_id=sample_course.course_id,
+        roadmap=roadmap_row,
+        payload=sample_course.model_dump(mode="json"),
+    )
+    item_id = sample_roadmap.items[0].item_id
+    new_lesson = sample_course.lessons[0].model_copy(update={"summary": "Refreshed summary."})
+    monkeypatch.setattr(
+        "courses.views.generate_lesson", lambda item, topic, certification: new_lesson
+    )
+
+    response = api_client.post(
+        f"/api/course/{sample_course.course_id}/lesson/{item_id}/regenerate/", {}, format="json"
+    )
+
+    assert response.status_code == 200
+    assert response.json()["summary"] == "Refreshed summary."
+
+    course_row = Course.objects.get(course_id=sample_course.course_id)
+    stored_lessons = course_row.payload["lessons"]
+    assert len(stored_lessons) == 1
+    assert stored_lessons[0]["summary"] == "Refreshed summary."
+
+
+@pytest.mark.django_db
+def test_regenerate_lesson_404_for_unknown_course(api_client):
+    response = api_client.post(
+        "/api/course/does-not-exist/lesson/some-item/regenerate/", {}, format="json"
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_regenerate_lesson_404_for_item_not_on_roadmap(
+    api_client,
+    sample_syllabus,
+    sample_assessment,
+    sample_graded_assessment,
+    sample_roadmap,
+    sample_course,
+):
+    roadmap_row = _make_roadmap_row(
+        sample_syllabus, sample_assessment, sample_graded_assessment, sample_roadmap
+    )
+    Course.objects.create(
+        course_id=sample_course.course_id,
+        roadmap=roadmap_row,
+        payload=sample_course.model_dump(mode="json"),
+    )
+
+    response = api_client.post(
+        f"/api/course/{sample_course.course_id}/lesson/not-a-real-item/regenerate/", {}, format="json"
+    )
+
+    assert response.status_code == 404
