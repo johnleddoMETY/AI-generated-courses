@@ -1,3 +1,4 @@
+import threading
 from datetime import datetime, timezone
 
 import pytest
@@ -76,11 +77,13 @@ def test_generate_lesson_assigns_ids(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_generate_course_fans_out_over_items(monkeypatch: pytest.MonkeyPatch) -> None:
-    titles = iter(["Lesson A", "Lesson B"])
-    monkeypatch.setattr(
-        "llm_engine.services.course.structured_completion",
-        lambda *args, **kwargs: _llm_lesson(next(titles)),
-    )
+    titles_by_domain = {"domain-a": "Lesson A", "domain-b": "Lesson B"}
+
+    def fake_completion(response_model: object, system: str, user_prompt: str, *, task: str):
+        domain = next(d for d in titles_by_domain if f"Domain: {d}" in user_prompt)
+        return _llm_lesson(titles_by_domain[domain])
+
+    monkeypatch.setattr("llm_engine.services.course.structured_completion", fake_completion)
     roadmap = _roadmap([_item("item-1", "domain-a", 4.0), _item("item-2", "domain-b", 2.5)])
 
     course = generate_course(roadmap)
@@ -93,6 +96,21 @@ def test_generate_course_fans_out_over_items(monkeypatch: pytest.MonkeyPatch) ->
     assert course.topic == "Cloud Architecture"
     assert course.certification == "AWS SAA-C03"
     assert course.total_estimated_hours == 6.5
+
+
+def test_generate_course_runs_lessons_concurrently(monkeypatch: pytest.MonkeyPatch) -> None:
+    barrier = threading.Barrier(2, timeout=2)
+
+    def fake_completion(response_model: object, system: str, user_prompt: str, *, task: str):
+        barrier.wait()  # deadlocks (and the test times out) unless both calls overlap
+        return _llm_lesson("ok")
+
+    monkeypatch.setattr("llm_engine.services.course.structured_completion", fake_completion)
+    roadmap = _roadmap([_item("item-1", "domain-a", 4.0), _item("item-2", "domain-b", 2.5)])
+
+    course = generate_course(roadmap)
+
+    assert len(course.lessons) == 2
 
 
 def test_generate_course_fails_fast(monkeypatch: pytest.MonkeyPatch) -> None:
