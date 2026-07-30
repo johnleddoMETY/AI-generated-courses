@@ -1,6 +1,6 @@
 {
-  "assessment_id": "697874f8-ef15-4537-9eae-d359f23acb6d",
-  "syllabus_id": "8b21b0a6-b59a-4884-a331-efd769b8faa4",
+  "assessment_id": "416c685f-6add-4e6b-8086-1cc6b94231c9",
+  "syllabus_id": "a0208f73-6a44-4efc-8ee7-9f6b98e87074",
   "topic": "Cloud Architecture",
   "certification": "AWS Solutions Architect Associate SAA-C03",
   "domains": [
@@ -12,7 +12,7 @@
         "High availability and fault tolerance",
         "Decoupling mechanisms",
         "Elasticity and scalability",
-        "Designing for disaster recovery"
+        "Multi-tier architecture design"
       ]
     },
     {
@@ -20,10 +20,10 @@
       "name": "Design High-Performing Architectures",
       "weight_percent": 28.0,
       "key_topics": [
-        "Optimizing performance for compute, storage, and database solutions",
+        "Performance optimization techniques",
         "Caching strategies",
-        "Load balancing and auto-scaling",
-        "Choosing the right database solution"
+        "Load balancing",
+        "Database optimization"
       ]
     },
     {
@@ -32,7 +32,7 @@
       "weight_percent": 24.0,
       "key_topics": [
         "Identity and access management",
-        "Data protection methods",
+        "Data encryption methods",
         "Network security best practices",
         "Compliance and governance frameworks"
       ]
@@ -42,123 +42,123 @@
       "name": "Design Cost-Optimized Architectures",
       "weight_percent": 18.0,
       "key_topics": [
-        "Cost estimation and budgeting",
-        "Choosing the right pricing model",
-        "Cost optimization strategies",
-        "Monitoring and controlling costs"
+        "Cost estimation and management",
+        "Resource optimization",
+        "Pricing models for AWS services",
+        "Cost-effective storage solutions"
       ]
     }
   ],
   "questions": [
     {
-      "question_id": "2596ee76-5b4d-462e-a018-d2e28230242a",
+      "question_id": "bd6b12fb-4894-44ac-a385-13ec43ddc46d",
       "domain_id": "design-resilient-architectures",
       "difficulty": "easy",
-      "stem": "You are designing a web application that requires high availability and fault tolerance. Which AWS service should you use to distribute incoming application traffic across multiple targets, such as EC2 instances, in different Availability Zones?",
+      "stem": "You are designing a web application that needs to ensure high availability. Which AWS service should you use to automatically distribute incoming application traffic across multiple targets, such as EC2 instances?",
       "options": [
         {
           "option_id": "A",
-          "text": "Amazon CloudFront"
+          "text": "AWS Elastic Load Balancer"
         },
         {
           "option_id": "B",
-          "text": "Amazon Route 53"
+          "text": "AWS Route 53"
         },
         {
           "option_id": "C",
-          "text": "Elastic Load Balancing"
+          "text": "AWS CloudFront"
         },
         {
           "option_id": "D",
-          "text": "Amazon S3"
-        }
-      ],
-      "correct_option_id": "C",
-      "explanation": "Elastic Load Balancing (ELB) is designed to distribute incoming application traffic across multiple targets, ensuring high availability and fault tolerance by routing traffic to healthy instances across different Availability Zones. \n\nOption A, Amazon CloudFront, is a content delivery network (CDN) that caches content, but it does not directly distribute traffic across EC2 instances. \n\nOption B, Amazon Route 53, is a DNS service that can route traffic based on DNS queries but does not handle load balancing directly. \n\nOption D, Amazon S3, is an object storage service that does not distribute traffic."
-    },
-    {
-      "question_id": "3dbd76c8-1436-412d-98c2-ca212ad6a25e",
-      "domain_id": "design-resilient-architectures",
-      "difficulty": "medium",
-      "stem": "You are tasked with designing a multi-tier web application that requires fault tolerance. What is the best approach to ensure that the application can recover quickly from a failure in one of its components?",
-      "options": [
-        {
-          "option_id": "A",
-          "text": "Implement a single instance of each component in different regions."
-        },
-        {
-          "option_id": "B",
-          "text": "Use Auto Scaling groups for each component and deploy them across multiple Availability Zones."
-        },
-        {
-          "option_id": "C",
-          "text": "Use Amazon S3 to store application data and access it directly from the application."
-        },
-        {
-          "option_id": "D",
-          "text": "Deploy the application in a single Availability Zone to reduce latency."
-        }
-      ],
-      "correct_option_id": "B",
-      "explanation": "Using Auto Scaling groups for each component deployed across multiple Availability Zones allows the application to automatically replace unhealthy instances and scale in response to demand, ensuring fault tolerance and quick recovery from failures.\n\nOption A is incorrect because having a single instance in different regions does not provide fault tolerance; if that instance fails, the application will not be available. \n\nOption C is incorrect because while Amazon S3 is suitable for storing data, it does not provide the necessary architecture for application availability and fault tolerance. \n\nOption D is incorrect because deploying in a single Availability Zone increases the risk of downtime due to localized failures."
-    },
-    {
-      "question_id": "e1bd0904-2a65-45f7-b991-32d601aee471",
-      "domain_id": "design-resilient-architectures",
-      "difficulty": "hard",
-      "stem": "Your organization needs to ensure that its critical applications can quickly recover from a region-wide outage. What design pattern should you implement to achieve this?",
-      "options": [
-        {
-          "option_id": "A",
-          "text": "Active-Active failover across multiple regions."
-        },
-        {
-          "option_id": "B",
-          "text": "Backup and restore strategy using Amazon S3."
-        },
-        {
-          "option_id": "C",
-          "text": "Multi-Region Active-Passive failover."
-        },
-        {
-          "option_id": "D",
-          "text": "Single region with Auto Scaling enabled."
+          "text": "AWS Auto Scaling"
         }
       ],
       "correct_option_id": "A",
-      "explanation": "An Active-Active failover across multiple regions allows both regions to handle traffic simultaneously, providing resilience and quick recovery in the event of a region-wide outage. \n\nOption B, a backup and restore strategy, does not provide real-time availability and may result in extended downtime. \n\nOption C, Multi-Region Active-Passive failover, involves one region being active while the other remains on standby, which could lead to longer recovery times during an outage. \n\nOption D, using a single region with Auto Scaling, does not provide resilience to regional failures."
+      "explanation": "The correct answer is A, AWS Elastic Load Balancer, as it automatically distributes incoming application traffic across multiple targets, ensuring high availability. Option B, AWS Route 53, is a DNS service that can direct traffic but does not balance it. Option C, AWS CloudFront, is a content delivery network that caches content but is not primarily for load balancing. Option D, AWS Auto Scaling, helps manage the number of EC2 instances but does not distribute traffic."
     },
     {
-      "question_id": "9f30f31c-4f85-406f-83ee-8e57aab4e0a3",
+      "question_id": "c23a4e09-b81b-4c2d-8313-bd66eb1e0ad2",
       "domain_id": "design-resilient-architectures",
       "difficulty": "medium",
-      "stem": "You are designing a system that processes user requests and needs to handle sudden spikes in traffic. Which AWS service can help decouple the components of your application and ensure that requests are processed reliably during peak loads?",
+      "stem": "Your company needs to design a multi-tier architecture for a new application. Which design principle should you prioritize to ensure fault tolerance?",
       "options": [
         {
           "option_id": "A",
-          "text": "Amazon EC2"
+          "text": "Use a single database instance to reduce complexity"
         },
         {
           "option_id": "B",
-          "text": "Amazon SQS"
+          "text": "Implement redundancy for critical components"
         },
         {
           "option_id": "C",
-          "text": "Amazon RDS"
+          "text": "Host all application components in one Availability Zone"
         },
         {
           "option_id": "D",
-          "text": "AWS Lambda"
+          "text": "Minimize the use of caching to ensure real-time data access"
         }
       ],
       "correct_option_id": "B",
-      "explanation": "Amazon SQS (Simple Queue Service) is a fully managed message queuing service that helps decouple components of an application, allowing requests to be queued and processed independently, ensuring reliability during traffic spikes. \n\nOption A, Amazon EC2, provides compute resources but does not inherently decouple components. \n\nOption C, Amazon RDS, is a database service and does not provide message queuing capabilities. \n\nOption D, AWS Lambda, is a serverless compute service but does not provide queuing; it can process requests but is not designed for decoupling."
+      "explanation": "The correct answer is B, implementing redundancy for critical components, as this helps ensure fault tolerance. Option A is incorrect because using a single database instance increases the risk of failure. Option C is wrong because hosting all components in one Availability Zone can lead to a single point of failure. Option D is not advisable because caching can improve performance without compromising data access."
     },
     {
-      "question_id": "d548edd9-bfcd-450e-ae59-ce818a7c54b5",
+      "question_id": "4928467a-a387-4bd4-830b-6e27a3e2eff3",
+      "domain_id": "design-resilient-architectures",
+      "difficulty": "hard",
+      "stem": "You are architecting a solution that requires data processing with minimal downtime. Which AWS feature can help you achieve this by automatically redirecting traffic during failures?",
+      "options": [
+        {
+          "option_id": "A",
+          "text": "AWS Elastic Load Balancer with health checks"
+        },
+        {
+          "option_id": "B",
+          "text": "Amazon S3 with versioning"
+        },
+        {
+          "option_id": "C",
+          "text": "AWS Lambda functions with event triggers"
+        },
+        {
+          "option_id": "D",
+          "text": "Amazon RDS Multi-AZ deployments"
+        }
+      ],
+      "correct_option_id": "A",
+      "explanation": "The correct answer is A, AWS Elastic Load Balancer with health checks, as it can automatically redirect traffic to healthy instances during failures. Option B, Amazon S3 with versioning, does not directly relate to traffic management. Option C, AWS Lambda functions, does not handle traffic redirection. Option D, Amazon RDS Multi-AZ deployments, provides high availability but does not directly manage incoming traffic."
+    },
+    {
+      "question_id": "1109ab56-fba6-4230-871c-a315449a0aeb",
+      "domain_id": "design-resilient-architectures",
+      "difficulty": "medium",
+      "stem": "You are tasked with designing a cloud architecture that can handle variable workloads. Which AWS service should you use to automatically adjust your resources based on demand?",
+      "options": [
+        {
+          "option_id": "A",
+          "text": "AWS Auto Scaling"
+        },
+        {
+          "option_id": "B",
+          "text": "Amazon CloudWatch"
+        },
+        {
+          "option_id": "C",
+          "text": "AWS Elastic Beanstalk"
+        },
+        {
+          "option_id": "D",
+          "text": "Amazon EC2 Reserved Instances"
+        }
+      ],
+      "correct_option_id": "A",
+      "explanation": "The correct answer is A, AWS Auto Scaling, which automatically adjusts resources based on demand. Option B, Amazon CloudWatch, is a monitoring service but does not adjust resources itself. Option C, AWS Elastic Beanstalk, is a platform for deploying applications but does not directly handle scaling. Option D, Amazon EC2 Reserved Instances, provides cost savings but does not adjust based on demand."
+    },
+    {
+      "question_id": "7df558a1-fcdc-4cad-9966-d39e12e31b06",
       "domain_id": "design-high-performing-architectures",
-      "difficulty": "easy",
-      "stem": "Which AWS service is best suited for in-memory caching to improve the performance of your application by reducing database load?",
+      "difficulty": "medium",
+      "stem": "To improve the performance of a web application, you decide to implement caching. Which AWS service is best suited for caching frequently accessed data?",
       "options": [
         {
           "option_id": "A",
@@ -174,77 +174,77 @@
         },
         {
           "option_id": "D",
-          "text": "Amazon DynamoDB"
+          "text": "AWS Lambda"
         }
       ],
       "correct_option_id": "B",
-      "explanation": "Amazon ElastiCache is specifically designed for in-memory caching, which helps improve application performance by reducing the load on databases through caching frequently accessed data. \n\nOption A, Amazon RDS, is a relational database service and is not an in-memory cache. \n\nOption C, Amazon S3, is an object storage service and does not provide caching capabilities. \n\nOption D, Amazon DynamoDB, is a NoSQL database service and while it can be performant, it does not serve as an in-memory cache."
+      "explanation": "The correct answer is B, Amazon ElastiCache, which is specifically designed for caching frequently accessed data to improve performance. Option A, Amazon RDS, is a relational database service and not a caching solution. Option C, Amazon S3, is used for object storage and not for caching. Option D, AWS Lambda, is a serverless compute service and does not provide caching capabilities."
     },
     {
-      "question_id": "e0fe9f64-c130-40e9-b7d8-c5c7d8364776",
+      "question_id": "a76d39f2-398c-481b-a695-e9a89aa942d1",
       "domain_id": "design-high-performing-architectures",
-      "difficulty": "medium",
-      "stem": "You are optimizing a web application that experiences high read traffic. Which caching strategy should you implement to improve response times and reduce database load?",
+      "difficulty": "easy",
+      "stem": "What is the primary benefit of using a Content Delivery Network (CDN) like Amazon CloudFront for a web application?",
       "options": [
         {
           "option_id": "A",
-          "text": "Client-side caching"
+          "text": "Improved data security"
         },
         {
           "option_id": "B",
-          "text": "Database replication"
+          "text": "Reduced latency and faster content delivery"
         },
         {
           "option_id": "C",
-          "text": "Content Delivery Network (CDN) caching"
+          "text": "Increased database performance"
         },
         {
           "option_id": "D",
-          "text": "In-memory caching with Amazon ElastiCache"
+          "text": "Lower AWS service costs"
         }
       ],
-      "correct_option_id": "D",
-      "explanation": "In-memory caching with Amazon ElastiCache allows for rapid access to frequently requested data, significantly improving response times and reducing the load on the database during high read traffic periods. \n\nOption A, client-side caching, can be beneficial but does not address server-side performance directly. \n\nOption B, database replication, can enhance availability and fault tolerance but does not specifically reduce load on a single database instance for read traffic. \n\nOption C, CDN caching, is effective for static content but may not be suitable for dynamic data that changes frequently."
+      "correct_option_id": "B",
+      "explanation": "The correct answer is B, reduced latency and faster content delivery, as CDNs cache content at edge locations closer to users. Option A is incorrect because while CDNs can enhance security, that is not their primary benefit. Option C is wrong because a CDN does not directly impact database performance. Option D is misleading; while CDNs can improve performance, they do not necessarily lower costs."
     },
     {
-      "question_id": "e66b952c-5dd1-46a8-bcc2-18573f8b9aab",
+      "question_id": "cdb7bee0-fae4-44f0-9ffc-d46991b3b8b5",
       "domain_id": "design-high-performing-architectures",
       "difficulty": "hard",
-      "stem": "You are tasked with selecting a database solution for a large-scale application that requires low-latency reads and writes. Which database technology would best meet these requirements?",
+      "stem": "You are optimizing an application that is experiencing slow database queries. Which approach would likely yield the best performance improvement?",
       "options": [
         {
           "option_id": "A",
-          "text": "Amazon RDS with read replicas"
+          "text": "Increase the size of the database instance"
         },
         {
           "option_id": "B",
-          "text": "Amazon DynamoDB"
+          "text": "Implement database indexing"
         },
         {
           "option_id": "C",
-          "text": "Amazon Aurora"
+          "text": "Use a different database engine"
         },
         {
           "option_id": "D",
-          "text": "Amazon Redshift"
+          "text": "Partition the database into multiple instances"
         }
       ],
       "correct_option_id": "B",
-      "explanation": "Amazon DynamoDB is a fully managed NoSQL database service designed for low-latency reads and writes, making it ideal for applications that require high performance at scale. \n\nOption A, Amazon RDS with read replicas, can improve read performance but may still introduce latency due to the nature of relational databases. \n\nOption C, Amazon Aurora, is a relational database that provides good performance but is not specifically optimized for the low-latency requirements of NoSQL workloads. \n\nOption D, Amazon Redshift, is a data warehouse solution optimized for analytical queries rather than transactional workloads."
+      "explanation": "The correct answer is B, implement database indexing, as it significantly improves query performance by allowing faster data retrieval. Option A may help, but it does not address the root cause of slow queries. Option C could work, but switching database engines is more complex and may not guarantee improvements. Option D can help with scaling but is a more complex solution that may not directly solve performance issues."
     },
     {
-      "question_id": "90efdc76-c98e-4205-8af1-6d4f3d8e3024",
+      "question_id": "135d2909-c943-42c6-b1a0-76706e2ab09c",
       "domain_id": "design-secure-applications-and-architectures",
-      "difficulty": "easy",
-      "stem": "Which AWS service helps manage user identities and permissions for your applications?",
+      "difficulty": "medium",
+      "stem": "You are tasked with securing sensitive data in your application. Which AWS service can help you manage encryption keys effectively?",
       "options": [
         {
           "option_id": "A",
-          "text": "AWS CloudTrail"
+          "text": "AWS IAM"
         },
         {
           "option_id": "B",
-          "text": "AWS IAM"
+          "text": "AWS KMS"
         },
         {
           "option_id": "C",
@@ -252,117 +252,117 @@
         },
         {
           "option_id": "D",
-          "text": "Amazon VPC"
+          "text": "AWS CloudTrail"
         }
       ],
       "correct_option_id": "B",
-      "explanation": "AWS IAM (Identity and Access Management) is the service that allows you to manage user identities and permissions for AWS resources, ensuring secure access control. \n\nOption A, AWS CloudTrail, is used for logging and monitoring API calls but does not manage identities directly. \n\nOption C, Amazon S3, is an object storage service and does not handle identity management. \n\nOption D, Amazon VPC, is a networking service that does not manage user identities."
+      "explanation": "The correct answer is B, AWS KMS (Key Management Service), which allows you to create and manage encryption keys effectively. Option A, AWS IAM, is for identity and access management but does not manage encryption keys. Option C, Amazon S3, is a storage service that can use encryption but does not manage keys. Option D, AWS CloudTrail, is for logging and monitoring, not key management."
     },
     {
-      "question_id": "6cd8f1cc-146e-4c3a-8163-9ba8f071c32f",
-      "domain_id": "design-secure-applications-and-architectures",
-      "difficulty": "medium",
-      "stem": "You need to protect sensitive data stored in Amazon S3. What is the best approach to ensure that the data remains secure?",
-      "options": [
-        {
-          "option_id": "A",
-          "text": "Store data in a public bucket with no restrictions."
-        },
-        {
-          "option_id": "B",
-          "text": "Enable server-side encryption with S3-managed keys."
-        },
-        {
-          "option_id": "C",
-          "text": "Use Amazon CloudFront to serve the data."
-        },
-        {
-          "option_id": "D",
-          "text": "Implement IAM policies to allow all users access."
-        }
-      ],
-      "correct_option_id": "B",
-      "explanation": "Enabling server-side encryption with S3-managed keys ensures that the data stored in Amazon S3 is encrypted at rest, providing a strong layer of security for sensitive data. \n\nOption A is incorrect as storing data in a public bucket exposes it to unauthorized access. \n\nOption C, while useful for performance, does not provide security for the data itself. \n\nOption D is incorrect because allowing all users access through IAM policies compromises data security."
-    },
-    {
-      "question_id": "4fbee267-9303-4ab5-a3ee-22a6bd34713d",
+      "question_id": "0f18a059-27b0-4281-8d83-afa9df6feca9",
       "domain_id": "design-secure-applications-and-architectures",
       "difficulty": "hard",
-      "stem": "You are designing a system that must comply with strict regulatory requirements for data protection. Which approach would be most effective in ensuring compliance?",
+      "stem": "In a multi-account AWS environment, what is the best practice for managing access to AWS resources securely?",
       "options": [
         {
           "option_id": "A",
-          "text": "Use AWS services without any additional security configurations."
+          "text": "Create IAM users in each account for all users"
         },
         {
           "option_id": "B",
-          "text": "Implement encryption for data at rest and in transit."
+          "text": "Use AWS Single Sign-On (SSO) for centralized access management"
         },
         {
           "option_id": "C",
-          "text": "Store all data in a single region."
+          "text": "Allow unrestricted access to reduce management overhead"
         },
         {
           "option_id": "D",
-          "text": "Enable versioning on S3 buckets."
+          "text": "Use individual access keys for each user"
         }
       ],
       "correct_option_id": "B",
-      "explanation": "Implementing encryption for data at rest and in transit is critical for meeting strict regulatory requirements for data protection, ensuring that sensitive information is secure both when stored and during transmission. \n\nOption A is incorrect as not configuring additional security measures would likely lead to non-compliance. \n\nOption C does not address compliance and may expose data to risks associated with regional outages. \n\nOption D, enabling versioning on S3 buckets, is a good practice for data recovery but does not directly address regulatory compliance."
+      "explanation": "The correct answer is B, use AWS Single Sign-On (SSO), which allows for centralized access management across multiple accounts securely. Option A is incorrect as creating IAM users in each account can lead to management complexities. Option C is wrong because allowing unrestricted access undermines security. Option D is not best practice; individual access keys can lead to security risks if not managed properly."
     },
     {
-      "question_id": "be765d65-f6da-4145-bc99-3be53e3be57c",
-      "domain_id": "design-cost-optimized-architectures",
+      "question_id": "cf4ec50c-297e-42c7-9e9d-6b6df9aea5c0",
+      "domain_id": "design-secure-applications-and-architectures",
       "difficulty": "easy",
-      "stem": "Which AWS service allows you to monitor your AWS costs and usage effectively?",
+      "stem": "What is the primary purpose of AWS Identity and Access Management (IAM)?",
       "options": [
         {
           "option_id": "A",
-          "text": "AWS Cost Explorer"
+          "text": "To monitor AWS resource usage"
         },
         {
           "option_id": "B",
-          "text": "AWS CloudFormation"
+          "text": "To manage user access and permissions for AWS services"
         },
         {
           "option_id": "C",
-          "text": "AWS IAM"
+          "text": "To encrypt data at rest and in transit"
         },
         {
           "option_id": "D",
-          "text": "Amazon RDS"
+          "text": "To configure network security groups"
         }
       ],
-      "correct_option_id": "A",
-      "explanation": "AWS Cost Explorer allows you to visualize, understand, and manage your AWS costs and usage over time, making it an effective tool for cost monitoring. \n\nOption B, AWS CloudFormation, is a service for deploying infrastructure as code and does not monitor costs. \n\nOption C, AWS IAM, manages user identities and permissions but does not provide cost monitoring capabilities. \n\nOption D, Amazon RDS, is a database service and is not designed for cost monitoring."
+      "correct_option_id": "B",
+      "explanation": "The correct answer is B, to manage user access and permissions for AWS services, which is the primary function of IAM. Option A is incorrect as IAM does not monitor usage. Option C is wrong because IAM does not handle encryption directly. Option D, while related to security, does not fall under IAM's responsibilities."
     },
     {
-      "question_id": "94b4908c-3674-49b7-9631-5585b524f06a",
+      "question_id": "014c45c2-d12f-4f28-899b-e18062401d5c",
       "domain_id": "design-cost-optimized-architectures",
       "difficulty": "medium",
-      "stem": "When designing a cost-optimized architecture, which of the following strategies should you consider to minimize costs?",
+      "stem": "You are reviewing your AWS costs and notice high expenses from EC2 instances. What is the best strategy to optimize costs?",
       "options": [
         {
           "option_id": "A",
-          "text": "Provisioning resources at maximum capacity."
+          "text": "Switch to on-demand instances exclusively"
         },
         {
           "option_id": "B",
-          "text": "Utilizing Reserved Instances for predictable workloads."
+          "text": "Use Reserved Instances for predictable workloads"
         },
         {
           "option_id": "C",
-          "text": "Using only on-demand instances."
+          "text": "Increase the instance size for better performance"
         },
         {
           "option_id": "D",
-          "text": "Deploying resources in multiple regions without analysis."
+          "text": "Utilize spot instances only during peak hours"
         }
       ],
       "correct_option_id": "B",
-      "explanation": "Utilizing Reserved Instances for predictable workloads allows you to save significantly on costs compared to on-demand pricing, making it a key strategy for cost optimization. \n\nOption A is incorrect because provisioning resources at maximum capacity can lead to unnecessary costs. \n\nOption C, using only on-demand instances, may be more expensive for predictable workloads compared to reserved options. \n\nOption D is incorrect as deploying resources in multiple regions without analysis can lead to higher costs without providing any benefits."
+      "explanation": "The correct answer is B, use Reserved Instances for predictable workloads, as they can significantly reduce costs compared to on-demand pricing. Option A is incorrect because relying solely on on-demand instances can lead to higher costs. Option C does not help with cost optimization; larger instances typically cost more. Option D is misleading; spot instances can save costs but are not necessarily reliable for peak hours."
+    },
+    {
+      "question_id": "357c180a-64f9-455d-b60d-2afa6230fcec",
+      "domain_id": "design-cost-optimized-architectures",
+      "difficulty": "hard",
+      "stem": "When designing a cost-optimized architecture, which of the following practices should be implemented to manage and reduce costs effectively?",
+      "options": [
+        {
+          "option_id": "A",
+          "text": "Use multiple AWS regions for redundancy"
+        },
+        {
+          "option_id": "B",
+          "text": "Implement auto-scaling to match demand"
+        },
+        {
+          "option_id": "C",
+          "text": "Keep all resources running 24/7 for availability"
+        },
+        {
+          "option_id": "D",
+          "text": "Avoid using AWS Budgets for cost tracking"
+        }
+      ],
+      "correct_option_id": "B",
+      "explanation": "The correct answer is B, implement auto-scaling to match demand, as it allows you to adjust resources based on actual usage, reducing costs. Option A, while good for redundancy, can increase costs if not managed properly. Option C is incorrect because keeping all resources running 24/7 can lead to unnecessary expenses. Option D is wrong; using AWS Budgets is essential for effective cost tracking and management."
     }
   ],
   "num_questions": 12,
-  "created_at": "2026-07-13T00:48:23.561016Z"
+  "created_at": "2026-07-30T21:50:35.812371Z"
 }

@@ -1,5 +1,5 @@
 {
-  "syllabus_id": "8b21b0a6-b59a-4884-a331-efd769b8faa4",
+  "syllabus_id": "a0208f73-6a44-4efc-8ee7-9f6b98e87074",
   "topic": "Cloud Architecture",
   "certification": "AWS Solutions Architect Associate SAA-C03",
   "exam_code": "SAA-C03",
@@ -12,7 +12,7 @@
         "High availability and fault tolerance",
         "Decoupling mechanisms",
         "Elasticity and scalability",
-        "Designing for disaster recovery"
+        "Multi-tier architecture design"
       ]
     },
     {
@@ -20,10 +20,10 @@
       "name": "Design High-Performing Architectures",
       "weight_percent": 28.0,
       "key_topics": [
-        "Optimizing performance for compute, storage, and database solutions",
+        "Performance optimization techniques",
         "Caching strategies",
-        "Load balancing and auto-scaling",
-        "Choosing the right database solution"
+        "Load balancing",
+        "Database optimization"
       ]
     },
     {
@@ -32,7 +32,7 @@
       "weight_percent": 24.0,
       "key_topics": [
         "Identity and access management",
-        "Data protection methods",
+        "Data encryption methods",
         "Network security best practices",
         "Compliance and governance frameworks"
       ]
@@ -42,13 +42,13 @@
       "name": "Design Cost-Optimized Architectures",
       "weight_percent": 18.0,
       "key_topics": [
-        "Cost estimation and budgeting",
-        "Choosing the right pricing model",
-        "Cost optimization strategies",
-        "Monitoring and controlling costs"
+        "Cost estimation and management",
+        "Resource optimization",
+        "Pricing models for AWS services",
+        "Cost-effective storage solutions"
       ]
     }
   ],
-  "source_note": "This blueprint is based on the official AWS certification documentation for the Solutions Architect Associate exam (SAA-C03), which outlines the exam domains and their respective weightings.",
-  "created_at": "2026-07-13T00:47:33.027039Z"
+  "source_note": "This blueprint is based on the official AWS certification documentation for the Solutions Architect Associate exam (SAA-C03) and reflects the current exam structure.",
+  "created_at": "2026-07-30T21:50:11.050014Z"
 }
