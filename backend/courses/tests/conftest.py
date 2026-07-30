@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 
+import jwt
 import pytest
+from django.conf import settings
 from llm_engine import (
     Assessment,
     Course,
@@ -47,8 +49,23 @@ def _clean_llm_env(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(name, raising=False)
 
 
+def _make_token(sub: str = "test-user-id", email: str = "test@example.com") -> str:
+    return jwt.encode(
+        {"sub": sub, "email": email, "aud": "authenticated", "role": "authenticated"},
+        settings.SUPABASE_JWT_SECRET,
+        algorithm="HS256",
+    )
+
+
 @pytest.fixture
 def api_client() -> APIClient:
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {_make_token()}")
+    return client
+
+
+@pytest.fixture
+def anonymous_client() -> APIClient:
     return APIClient()
 
 

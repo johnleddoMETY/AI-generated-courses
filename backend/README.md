@@ -118,6 +118,7 @@ All endpoints live under `/api/` (see `courses/urls.py`).
 | `POST` | `/api/assessment/<assessment_id>/roadmap/` | Generate a gap-targeted study roadmap from grading results |
 | `POST` | `/api/roadmap/<roadmap_id>/course/` | Generate a full text course (one lesson per roadmap item) |
 | `GET` | `/api/course/<course_id>/` | Fetch a stored course |
+| `POST` | `/api/course/<course_id>/lesson/<item_id>/regenerate/` | Regenerate one lesson and swap it into the stored course |
 
 ### `POST /api/syllabus/`
 ```json
@@ -154,22 +155,60 @@ Requires a `GradedAssessment` to already exist for that assessment.
 Returns the `Roadmap` payload, `201`.
 
 ### `POST /api/roadmap/<roadmap_id>/course/`
-No request body. Generates one lesson per roadmap item, sequentially —
-this is by far the slowest and most expensive call in the pipeline (one
-LLM call per item, "textbook-length" output each). Returns the full
-`Course` payload, `201`.
+No request body. Generates one lesson per roadmap item — `llm_engine`
+now fans these out concurrently via a thread pool rather than one at a
+time, but it's still by far the slowest and most expensive call in the
+pipeline (one LLM call per item, "textbook-length" output each). Returns
+the full `Course` payload, `201`.
 
-> **Caveat:** this currently runs synchronously inside the request, same
-> as the other four endpoints, purely to match the existing pattern. The
-> pipeline README explicitly recommends treating course generation as a
-> background job instead — worth moving to one (e.g. Celery/RQ) before
-> this is client-facing, so a slow/failed generation doesn't hold open an
-> HTTP connection.
+> **Caveat:** this still runs synchronously inside the request — the view
+> blocks until every lesson comes back, same as the other endpoints,
+> purely to match the existing pattern. Concurrency inside `llm_engine`
+> makes it faster, but doesn't change that; the pipeline README still
+> recommends treating course generation as a background job. Worth
+> moving to one (e.g. Celery/RQ) before this is client-facing, so a
+> slow/failed generation doesn't hold open an HTTP connection.
 
 ### `GET /api/course/<course_id>/`
 Returns the stored `Course` payload, `200`. No stripping needed here —
 unlike `Assessment`, `Lesson.practice_questions` are open-ended study
 material meant to be shown with their answers.
+
+### `POST /api/course/<course_id>/lesson/<item_id>/regenerate/`
+No request body. Regenerates a single lesson (one LLM call, via
+`generate_lesson`) and swaps it into the stored `Course.payload` by
+matching `item_id`, without touching the rest of the course. Returns the
+regenerated `Lesson` payload, `200`. Useful for refreshing stale content
+or retrying one lesson that came out bad — much cheaper than regenerating
+the whole course. 404s if the course doesn't exist or if `item_id` isn't
+one of the roadmap items the course was built from.
+
+## Auth
+
+Every endpoint requires a valid **Supabase-issued JWT** — `DEFAULT_PERMISSION_CLASSES`
+is set to `IsAuthenticated` project-wide, so nothing is reachable
+unauthenticated by default.
+
+- **Login/registration happen entirely on the frontend** via `supabase-js`
+  — Django has no register/login endpoints of its own and never sees a
+  password. The frontend sends the access token Supabase returns as
+  `Authorization: Bearer <token>` on every request.
+- `courses/authentication.py`'s `SupabaseJWTAuthentication` verifies the
+  token's signature against `SUPABASE_JWT_SECRET` (from your Supabase
+  project: Project Settings → API → JWT Secret) and checks
+  `aud == "authenticated"`. On success it sets `request.user` to a
+  lightweight, non-persisted `SupabaseUser` (just `id`/`email` from the
+  token claims) — no local `User` row is created or required.
+- **No per-resource ownership yet.** This is purely an
+  authenticated-or-not gate — any authenticated user can still read/write
+  any `syllabus_id`/`assessment_id`/etc. Tying records to the calling
+  user is a deliberate fast-follow, not done here.
+- Missing/invalid tokens get `401` with a `WWW-Authenticate: Bearer`
+  header.
+- **Tests and `demo_api.sh` don't need a real Supabase project** — both
+  mint their own token locally, signed with `SUPABASE_JWT_SECRET` (which
+  defaults to a fixed dev value unless overridden), so the whole suite
+  and the demo script run standalone.
 
 ## Request validation & error handling
 
@@ -199,19 +238,20 @@ cd backend
 pytest
 ```
 
-`courses/tests/` covers all five endpoints
+`courses/tests/` covers all eight endpoints plus the auth gate itself
 (`test_syllabus_api.py`, `test_assessment_api.py`, `test_grading_api.py`,
-`test_roadmap_api.py`, `test_course_api.py`), with shared fixtures in
-`tests/conftest.py` building fake `llm_engine` objects and an isolated
-`APIClient` (LLM-related env vars are cleared per-test so real
-credentials never leak into test runs). See the "Running the test suite"
-note above for the one-time MySQL grant needed against the Docker
-container.
+`test_roadmap_api.py`, `test_course_api.py`, `test_authentication.py`),
+with shared fixtures in `tests/conftest.py` building fake `llm_engine`
+objects and an authenticated `APIClient` (LLM-related env vars are
+cleared per-test so real credentials never leak into test runs). See the
+"Running the test suite" note above for the one-time MySQL grant needed
+against the Docker container.
 
 ## Known gaps / next steps
 
-- No auth — any client can read/write any `syllabus_id`/`assessment_id`.
-  Needed before this is multi-user safe.
+- Auth is authenticated-or-not only — any authenticated user can still
+  read/write any `syllabus_id`/`assessment_id`/etc. Tying records to the
+  calling user is the natural next step.
 - No list endpoints (e.g. "all syllabuses for a user") — only
   create/retrieve by ID.
 - Course generation (`POST /api/roadmap/<roadmap_id>/course/`) runs
@@ -222,3 +262,8 @@ container.
   isn't in that compose file yet.
 - Settings are dev-only (`DEBUG=true`, a placeholder `SECRET_KEY`
   default) — no prod/dev split yet.
+- Parallel lesson fan-out (`generate_course`'s thread pool) is fail-fast:
+  lessons already in flight when one fails are not cancelled but their
+  results are discarded either way. No partial-course recovery — a
+  failed `POST .../course/` needs a full retry, though individual lessons
+  can be fixed after the fact via the regenerate endpoint.
