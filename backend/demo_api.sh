@@ -6,19 +6,35 @@ set -euo pipefail
 BASE_URL="http://127.0.0.1:8000/api"
 step() { printf "\n\033[1;36m== %s ==\033[0m\n" "$1"; }
 
-step "0. Mint a dev auth token (Supabase login normally issues this on the frontend)"
-TOKEN=$(python -c "
-import django, os
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
-django.setup()
-import jwt
-from django.conf import settings
-print(jwt.encode(
-    {'sub': 'demo-user', 'email': 'demo@example.com', 'aud': 'authenticated', 'role': 'authenticated'},
-    settings.SUPABASE_JWT_SECRET,
-    algorithm='HS256',
-))
-")
+# Real Supabase projects sign session tokens asymmetrically (ES256, via a
+# JWKS endpoint) — there's no shared secret to self-sign a fake token with
+# anymore, so this logs in for real. Needs a Supabase test user + these vars
+# in the repo-root .env (see backend/.env.example): SUPABASE_URL,
+# SUPABASE_ANON_KEY, SUPABASE_DEMO_EMAIL, SUPABASE_DEMO_PASSWORD.
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [ -f "$REPO_ROOT/.env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$REPO_ROOT/.env"
+  set +a
+fi
+
+step "0. Log in to Supabase for a real auth token (the frontend does this via supabase-js)"
+: "${SUPABASE_URL:?Set SUPABASE_URL in .env}"
+: "${SUPABASE_ANON_KEY:?Set SUPABASE_ANON_KEY in .env}"
+: "${SUPABASE_DEMO_EMAIL:?Set SUPABASE_DEMO_EMAIL in .env to an existing Supabase test user}"
+: "${SUPABASE_DEMO_PASSWORD:?Set SUPABASE_DEMO_PASSWORD in .env for that test user}"
+
+TOKEN=$(curl -s -X POST "$SUPABASE_URL/auth/v1/token?grant_type=password" \
+  -H "apikey: $SUPABASE_ANON_KEY" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\": \"$SUPABASE_DEMO_EMAIL\", \"password\": \"$SUPABASE_DEMO_PASSWORD\"}" \
+  | jq -r '.access_token')
+
+if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
+  echo "Failed to get a Supabase token — check SUPABASE_* vars in .env and that the demo user exists (Auth > Users, 'Auto Confirm User' checked)." >&2
+  exit 1
+fi
 AUTH_HEADER="Authorization: Bearer $TOKEN"
 
 step "1. Create a syllabus"

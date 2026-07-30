@@ -1,11 +1,13 @@
 import pytest
 
 from courses.models import Assessment, Course, GradedAssessment, Roadmap, Syllabus
+from courses.tests.conftest import TEST_USER_ID
 
 
 def _make_roadmap_row(sample_syllabus, sample_assessment, sample_graded_assessment, sample_roadmap):
     syllabus_row = Syllabus.objects.create(
         syllabus_id=sample_syllabus.syllabus_id,
+        owner_id=TEST_USER_ID,
         topic=sample_syllabus.topic,
         certification=sample_syllabus.certification,
         exam_code=sample_syllabus.exam_code,
@@ -153,6 +155,55 @@ def test_regenerate_lesson_404_for_item_not_on_roadmap(
 
     response = api_client.post(
         f"/api/course/{sample_course.course_id}/lesson/not-a-real-item/regenerate/", {}, format="json"
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_retrieve_course_404_for_a_different_users_course(
+    other_user_client,
+    sample_syllabus,
+    sample_assessment,
+    sample_graded_assessment,
+    sample_roadmap,
+    sample_course,
+):
+    roadmap_row = _make_roadmap_row(
+        sample_syllabus, sample_assessment, sample_graded_assessment, sample_roadmap
+    )
+    Course.objects.create(
+        course_id=sample_course.course_id,
+        roadmap=roadmap_row,
+        payload=sample_course.model_dump(mode="json"),
+    )
+
+    response = other_user_client.get(f"/api/course/{sample_course.course_id}/")
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_regenerate_lesson_404_for_a_different_users_course(
+    other_user_client,
+    sample_syllabus,
+    sample_assessment,
+    sample_graded_assessment,
+    sample_roadmap,
+    sample_course,
+):
+    roadmap_row = _make_roadmap_row(
+        sample_syllabus, sample_assessment, sample_graded_assessment, sample_roadmap
+    )
+    Course.objects.create(
+        course_id=sample_course.course_id,
+        roadmap=roadmap_row,
+        payload=sample_course.model_dump(mode="json"),
+    )
+    item_id = sample_roadmap.items[0].item_id
+
+    response = other_user_client.post(
+        f"/api/course/{sample_course.course_id}/lesson/{item_id}/regenerate/", {}, format="json"
     )
 
     assert response.status_code == 404

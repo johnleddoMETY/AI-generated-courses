@@ -56,6 +56,7 @@ class SyllabusCreateView(APIView):
         payload = syllabus.model_dump(mode="json")
         Syllabus.objects.create(
             syllabus_id=syllabus.syllabus_id,
+            owner_id=request.user.id,
             topic=syllabus.topic,
             certification=syllabus.certification,
             exam_code=syllabus.exam_code,
@@ -69,7 +70,7 @@ class AssessmentCreateView(APIView):
         body = AssessmentCreateRequestSerializer(data=request.data)
         body.is_valid(raise_exception=True)
 
-        syllabus_row = get_object_or_404(Syllabus, syllabus_id=syllabus_id)
+        syllabus_row = get_object_or_404(Syllabus, syllabus_id=syllabus_id, owner_id=request.user.id)
         syllabus = SyllabusModel.model_validate(syllabus_row.payload)
 
         assessment = generate_assessment(syllabus, **body.validated_data)
@@ -85,7 +86,9 @@ class AssessmentCreateView(APIView):
 
 class AssessmentRetrieveView(APIView):
     def get(self, request: Request, assessment_id: str) -> Response:
-        assessment_row = get_object_or_404(Assessment, assessment_id=assessment_id)
+        assessment_row = get_object_or_404(
+            Assessment, assessment_id=assessment_id, syllabus__owner_id=request.user.id
+        )
         return Response(serialize_assessment_public(assessment_row.payload))
 
 
@@ -96,7 +99,9 @@ class GradeAssessmentView(APIView):
 
         # Always grade against the server-stored assessment — never trust
         # anything about questions/answer-key that the client might send.
-        assessment_row = get_object_or_404(Assessment, assessment_id=assessment_id)
+        assessment_row = get_object_or_404(
+            Assessment, assessment_id=assessment_id, syllabus__owner_id=request.user.id
+        )
         assessment = AssessmentModel.model_validate(assessment_row.payload)
         answers = [UserAnswer(**answer) for answer in body.validated_data["answers"]]
 
@@ -114,7 +119,9 @@ class RoadmapCreateView(APIView):
         body = RoadmapCreateRequestSerializer(data=request.data)
         body.is_valid(raise_exception=True)
 
-        assessment_row = get_object_or_404(Assessment, assessment_id=assessment_id)
+        assessment_row = get_object_or_404(
+            Assessment, assessment_id=assessment_id, syllabus__owner_id=request.user.id
+        )
         graded_row = get_object_or_404(GradedAssessment, assessment=assessment_row)
         syllabus_row = assessment_row.syllabus
 
@@ -143,7 +150,9 @@ class CourseCreateView(APIView):
     """
 
     def post(self, request: Request, roadmap_id: str) -> Response:
-        roadmap_row = get_object_or_404(Roadmap, roadmap_id=roadmap_id)
+        roadmap_row = get_object_or_404(
+            Roadmap, roadmap_id=roadmap_id, syllabus__owner_id=request.user.id
+        )
         roadmap = RoadmapModel.model_validate(roadmap_row.payload)
 
         course = generate_course(roadmap)
@@ -159,7 +168,9 @@ class CourseCreateView(APIView):
 
 class CourseRetrieveView(APIView):
     def get(self, request: Request, course_id: str) -> Response:
-        course_row = get_object_or_404(Course, course_id=course_id)
+        course_row = get_object_or_404(
+            Course, course_id=course_id, roadmap__syllabus__owner_id=request.user.id
+        )
         return Response(course_row.payload)
 
 
@@ -171,7 +182,9 @@ class LessonRegenerateView(APIView):
     """
 
     def post(self, request: Request, course_id: str, item_id: str) -> Response:
-        course_row = get_object_or_404(Course, course_id=course_id)
+        course_row = get_object_or_404(
+            Course, course_id=course_id, roadmap__syllabus__owner_id=request.user.id
+        )
         roadmap = RoadmapModel.model_validate(course_row.roadmap.payload)
 
         item = next((i for i in roadmap.items if i.item_id == item_id), None)

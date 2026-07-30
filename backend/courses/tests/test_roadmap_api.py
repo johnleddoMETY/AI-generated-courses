@@ -1,11 +1,13 @@
 import pytest
 
 from courses.models import Assessment, GradedAssessment, Roadmap, Syllabus
+from courses.tests.conftest import TEST_USER_ID
 
 
 def _make_graded_row(sample_syllabus, sample_assessment, sample_graded_assessment):
     syllabus_row = Syllabus.objects.create(
         syllabus_id=sample_syllabus.syllabus_id,
+        owner_id=TEST_USER_ID,
         topic=sample_syllabus.topic,
         certification=sample_syllabus.certification,
         exam_code=sample_syllabus.exam_code,
@@ -45,6 +47,7 @@ def test_create_roadmap_after_grading(
 def test_create_roadmap_404_before_grading_exists(api_client, sample_syllabus, sample_assessment):
     syllabus_row = Syllabus.objects.create(
         syllabus_id=sample_syllabus.syllabus_id,
+        owner_id=TEST_USER_ID,
         topic=sample_syllabus.topic,
         certification=sample_syllabus.certification,
         exam_code=sample_syllabus.exam_code,

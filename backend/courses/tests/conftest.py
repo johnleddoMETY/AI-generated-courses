@@ -72,7 +72,13 @@ def _patch_jwks_client(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("courses.authentication._get_jwks_client", lambda: _FakeJWKSClient())
 
 
-def _make_token(sub: str = "test-user-id", email: str = "test@example.com") -> str:
+# Matches every test fixture's Syllabus.owner_id below, so api_client (and
+# anything it creates) is treated as the same authenticated user.
+TEST_USER_ID = "test-user-id"
+OTHER_USER_ID = "other-user-id"
+
+
+def _make_token(sub: str = TEST_USER_ID, email: str = "test@example.com") -> str:
     return jwt.encode(
         {"sub": sub, "email": email, "aud": "authenticated", "role": "authenticated"},
         _TEST_PRIVATE_KEY,
@@ -84,6 +90,14 @@ def _make_token(sub: str = "test-user-id", email: str = "test@example.com") -> s
 def api_client() -> APIClient:
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {_make_token()}")
+    return client
+
+
+@pytest.fixture
+def other_user_client() -> APIClient:
+    """A different authenticated user — for cross-user isolation tests."""
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {_make_token(sub=OTHER_USER_ID, email='other@example.com')}")
     return client
 
 

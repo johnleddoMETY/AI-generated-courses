@@ -90,12 +90,16 @@ stored object goes back into an `llm_engine` service function, it's
 rebuilt with `Model.model_validate(row.payload)`.
 
 ```
-Syllabus(syllabus_id, topic, certification, exam_code, payload)
+Syllabus(syllabus_id, owner_id, topic, certification, exam_code, payload)
   └── Assessment(assessment_id, syllabus FK, payload)
         ├── GradedAssessment(assessment FK/PK, payload)
         └── Roadmap(roadmap_id, assessment FK, syllabus FK, payload)
               └── Course(course_id, roadmap FK, payload)
 ```
+
+`Syllabus.owner_id` (the Supabase user's `sub` claim) is the root of the
+ownership chain — see the Auth section below for how downstream models
+are scoped by it.
 
 **Security rule:** `Assessment.payload` includes `correct_option_id` and
 `explanation` for every question — this row must never be returned to a
@@ -194,21 +198,29 @@ unauthenticated by default.
   password. The frontend sends the access token Supabase returns as
   `Authorization: Bearer <token>` on every request.
 - `courses/authentication.py`'s `SupabaseJWTAuthentication` verifies the
-  token's signature against `SUPABASE_JWT_SECRET` (from your Supabase
-  project: Project Settings → API → JWT Secret) and checks
-  `aud == "authenticated"`. On success it sets `request.user` to a
-  lightweight, non-persisted `SupabaseUser` (just `id`/`email` from the
-  token claims) — no local `User` row is created or required.
-- **No per-resource ownership yet.** This is purely an
-  authenticated-or-not gate — any authenticated user can still read/write
-  any `syllabus_id`/`assessment_id`/etc. Tying records to the calling
-  user is a deliberate fast-follow, not done here.
+  token against your project's **JWKS endpoint**
+  (`<SUPABASE_URL>/auth/v1/.well-known/jwks.json`, fetched via
+  `PyJWKClient`) and checks `aud == "authenticated"`. Current Supabase
+  projects sign session tokens with an asymmetric key (ES256) rotated
+  through this endpoint, not a static shared secret — so there's no
+  secret to configure, just `SUPABASE_URL` (Project Settings → API →
+  Project URL). On success it sets `request.user` to a lightweight,
+  non-persisted `SupabaseUser` (just `id`/`email` from the token claims)
+  — no local `User` row is created or required.
+- **Per-resource ownership is enforced.** `Syllabus.owner_id` (the JWT
+  `sub` claim) is the root of the ownership chain — every downstream
+  model (`Assessment`, `Roadmap`, `Course`) is scoped by following its
+  foreign keys back to `Syllabus.owner_id`, e.g.
+  `get_object_or_404(Course, course_id=..., roadmap__syllabus__owner_id=request.user.id)`.
+  A record that exists but belongs to a different user 404s — deliberately,
+  not `403`, so requests can't be used to probe which IDs exist.
 - Missing/invalid tokens get `401` with a `WWW-Authenticate: Bearer`
   header.
-- **Tests and `demo_api.sh` don't need a real Supabase project** — both
-  mint their own token locally, signed with `SUPABASE_JWT_SECRET` (which
-  defaults to a fixed dev value unless overridden), so the whole suite
-  and the demo script run standalone.
+- **Tests don't need a real Supabase project.** They mint their own
+  ES256-signed token against a local test keypair and monkeypatch the
+  JWKS lookup (`courses.authentication._get_jwks_client`), so the whole
+  suite runs offline. `demo_api.sh` **does** need a real project — see
+  its script for how it fetches a token.
 
 ## Request validation & error handling
 
@@ -249,11 +261,9 @@ against the Docker container.
 
 ## Known gaps / next steps
 
-- Auth is authenticated-or-not only — any authenticated user can still
-  read/write any `syllabus_id`/`assessment_id`/etc. Tying records to the
-  calling user is the natural next step.
 - No list endpoints (e.g. "all syllabuses for a user") — only
-  create/retrieve by ID.
+  create/retrieve by ID. Now that records are owned by a user, this is
+  the natural next step.
 - Course generation (`POST /api/roadmap/<roadmap_id>/course/`) runs
   synchronously — see the caveat under that endpoint above. Should move
   to a background job queue before it's client-facing.
