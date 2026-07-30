@@ -8,6 +8,7 @@ Model.model_validate() before calling into the service functions.
 
 from __future__ import annotations
 
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from llm_engine import (
     Assessment as AssessmentModel,
@@ -25,6 +26,7 @@ from llm_engine import (
     UserAnswer,
     generate_assessment,
     generate_course,
+    generate_lesson,
     generate_roadmap,
     generate_syllabus,
     grade_assessment,
@@ -159,3 +161,32 @@ class CourseRetrieveView(APIView):
     def get(self, request: Request, course_id: str) -> Response:
         course_row = get_object_or_404(Course, course_id=course_id)
         return Response(course_row.payload)
+
+
+class LessonRegenerateView(APIView):
+    """Regenerates one lesson and swaps it into the stored Course.
+
+    For refreshing stale content or retrying a single lesson that came out
+    bad, without paying for a full course regeneration.
+    """
+
+    def post(self, request: Request, course_id: str, item_id: str) -> Response:
+        course_row = get_object_or_404(Course, course_id=course_id)
+        roadmap = RoadmapModel.model_validate(course_row.roadmap.payload)
+
+        item = next((i for i in roadmap.items if i.item_id == item_id), None)
+        if item is None:
+            raise Http404(f"No roadmap item '{item_id}' on this course's roadmap.")
+
+        lesson = generate_lesson(item, roadmap.topic, roadmap.certification)
+        lesson_payload = lesson.model_dump(mode="json")
+
+        lessons = course_row.payload["lessons"]
+        index = next((i for i, existing in enumerate(lessons) if existing["item_id"] == item_id), None)
+        if index is None:
+            lessons.append(lesson_payload)
+        else:
+            lessons[index] = lesson_payload
+
+        course_row.save(update_fields=["payload"])
+        return Response(lesson_payload, status=status.HTTP_200_OK)
