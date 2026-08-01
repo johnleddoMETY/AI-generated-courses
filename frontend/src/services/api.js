@@ -5,9 +5,6 @@ const api = axios.create({
 });
 
 export async function generateLearningPath(data) {
-  // Temporary mock response.
-  // Replace this with the real backend API later.
-
   return {
     data: {
       assessmentId: "123",
@@ -17,12 +14,8 @@ export async function generateLearningPath(data) {
     },
   };
 
-  /*
-  Real backend call later:
-
-  return api.post("/learn", data);
-
-  */
+  // Real backend call later:
+  // return api.post("/learn", data);
 }
 
 export default api;
