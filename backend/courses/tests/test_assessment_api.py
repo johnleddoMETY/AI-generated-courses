@@ -1,0 +1,69 @@
+import json
+
+import pytest
+
+from courses.models import Assessment, Syllabus
+
+_SECRET_FIELDS = ("correct_option_id", "explanation")
+
+
+def _make_syllabus_row(sample_syllabus):
+    return Syllabus.objects.create(
+        syllabus_id=sample_syllabus.syllabus_id,
+        topic=sample_syllabus.topic,
+        certification=sample_syllabus.certification,
+        exam_code=sample_syllabus.exam_code,
+        payload=sample_syllabus.model_dump(mode="json"),
+    )
+
+
+@pytest.mark.django_db
+def test_create_assessment_strips_answer_key_from_response(
+    api_client, sample_syllabus, sample_assessment, monkeypatch
+):
+    _make_syllabus_row(sample_syllabus)
+    monkeypatch.setattr(
+        "courses.views.generate_assessment", lambda syllabus, **kwargs: sample_assessment
+    )
+
+    response = api_client.post(
+        f"/api/syllabus/{sample_syllabus.syllabus_id}/assessment/",
+        {"num_questions": 1},
+        format="json",
+    )
+
+    assert response.status_code == 201
+    body_text = json.dumps(response.json())
+    for field in _SECRET_FIELDS:
+        assert field not in body_text, f"{field} leaked into the public assessment response"
+
+    # But the server-side stored row must keep the full answer key.
+    row = Assessment.objects.get(assessment_id=sample_assessment.assessment_id)
+    assert row.payload["questions"][0]["correct_option_id"] == "A"
+    assert row.payload["questions"][0]["explanation"]
+
+
+@pytest.mark.django_db
+def test_create_assessment_404_for_unknown_syllabus(api_client):
+    response = api_client.post(
+        "/api/syllabus/does-not-exist/assessment/", {"num_questions": 1}, format="json"
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_retrieve_assessment_strips_answer_key(api_client, sample_syllabus, sample_assessment):
+    syllabus_row = _make_syllabus_row(sample_syllabus)
+    Assessment.objects.create(
+        assessment_id=sample_assessment.assessment_id,
+        syllabus=syllabus_row,
+        payload=sample_assessment.model_dump(mode="json"),
+    )
+
+    response = api_client.get(f"/api/assessment/{sample_assessment.assessment_id}/")
+
+    assert response.status_code == 200
+    body_text = json.dumps(response.json())
+    for field in _SECRET_FIELDS:
+        assert field not in body_text

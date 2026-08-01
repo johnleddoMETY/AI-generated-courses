@@ -2,10 +2,15 @@ from datetime import date, datetime, timezone
 
 from llm_engine.schemas import (
     Assessment,
+    Course,
     DomainScore,
     ExamDomain,
     GradedAssessment,
     KnowledgeGap,
+    Lesson,
+    LessonExample,
+    LessonPracticeQuestion,
+    LessonSection,
     Question,
     QuestionOption,
     QuestionResult,
@@ -170,3 +175,36 @@ def test_roadmap_without_exam_date_round_trips() -> None:
         created_at=_NOW,
     )
     assert Roadmap.model_validate_json(roadmap.model_dump_json()) == roadmap
+
+
+def test_course_round_trips_json() -> None:
+    lesson = Lesson(
+        lesson_id="7b0d4a4e-0000-4000-8000-000000000010",
+        item_id="7b0d4a4e-0000-4000-8000-000000000005",
+        title="IAM permission boundaries deep dive",
+        sections=[
+            LessonSection(heading="What is a permission boundary", body_markdown="A boundary caps..."),
+        ],
+        examples=[
+            LessonExample(scenario="A dev needs S3 access", walkthrough="Attach a boundary that..."),
+        ],
+        practice_questions=[
+            LessonPracticeQuestion(
+                question="What happens when a boundary and an identity policy disagree?",
+                answer="The effective permission is the intersection.",
+                explanation="Both must allow an action for it to be permitted.",
+            )
+        ],
+        summary="Boundaries constrain the maximum permissions of an identity.",
+        created_at=_NOW,
+    )
+    course = Course(
+        course_id="7b0d4a4e-0000-4000-8000-000000000020",
+        roadmap_id="7b0d4a4e-0000-4000-8000-000000000004",
+        topic="Cloud Architecture",
+        certification="AWS Solutions Architect Associate SAA-C03",
+        lessons=[lesson],
+        total_estimated_hours=2.5,
+        created_at=_NOW,
+    )
+    assert Course.model_validate_json(course.model_dump_json()) == course

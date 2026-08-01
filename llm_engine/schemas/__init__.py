@@ -11,6 +11,14 @@ from llm_engine.schemas.assessment import (
     QuestionOption,
     UserAnswer,
 )
+from llm_engine.schemas.course import (
+    Course,
+    Lesson,
+    LessonExample,
+    LessonLLMResponse,
+    LessonPracticeQuestion,
+    LessonSection,
+)
 from llm_engine.schemas.grading import (
     DomainQualitativeNote,
     DomainScore,
@@ -41,6 +49,7 @@ from llm_engine.schemas.syllabus import (
 __all__ = [
     "Assessment",
     "AssessmentLLMResponse",
+    "Course",
     "Difficulty",
     "DomainQualitativeNote",
     "DomainScore",
@@ -48,6 +57,11 @@ __all__ = [
     "GradedAssessment",
     "GradingDiagnosis",
     "KnowledgeGap",
+    "Lesson",
+    "LessonExample",
+    "LessonLLMResponse",
+    "LessonPracticeQuestion",
+    "LessonSection",
     "LLMExamDomain",
     "LLMQuestion",
     "LLMQuestionOption",

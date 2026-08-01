@@ -14,6 +14,7 @@ def test_task_settings_defaults() -> None:
     assert get_task_settings("assessment").temperature == 0.6
     assert get_task_settings("grading").temperature == 0.2
     assert get_task_settings("roadmap").temperature == 0.6
+    assert get_task_settings("lesson").temperature == 0.6
 
 
 def test_task_settings_env_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
