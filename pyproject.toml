@@ -11,6 +11,7 @@ dependencies = [
     "litellm>=1.40",
     "pydantic>=2.7",
     "python-dotenv>=1.0",
+    "tenacity>=8.2",
 ]
 
 [project.optional-dependencies]
@@ -22,6 +23,8 @@ backend = [
     "mysqlclient>=2.2",
     "django-cors-headers>=4.4",
     "pytest-django>=4.8",
+    "pyjwt[crypto]>=2.8",
+    "certifi>=2024.0",
 ]
 
 [tool.setuptools.packages.find]

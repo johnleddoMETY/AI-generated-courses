@@ -15,7 +15,14 @@ from django.db import models
 
 
 class Syllabus(models.Model):
+    """owner_id is the Supabase user id (JWT 'sub' claim) that created this
+    syllabus. It's the root of the ownership chain — every downstream model
+    (Assessment, Roadmap, Course, ...) is scoped by following FKs back here,
+    rather than each carrying its own owner_id.
+    """
+
     syllabus_id = models.CharField(primary_key=True, max_length=36)
+    owner_id = models.CharField(max_length=36)
     topic = models.CharField(max_length=255)
     certification = models.CharField(max_length=255)
     exam_code = models.CharField(max_length=50, null=True, blank=True)
