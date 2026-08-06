@@ -8,16 +8,20 @@ from llm_engine import (
     Course,
     DomainScore,
     ExamDomain,
+    FillInBlankQuestion,
+    FullTextQuestion,
     GradedAssessment,
     Lesson,
     LessonExample,
     LessonPracticeQuestion,
     LessonSection,
-    Question,
+    MultiAnswerQuestion,
     QuestionOption,
     QuestionResult,
+    QuestionTypeWeight,
     Roadmap,
     RoadmapItem,
+    SingleAnswerQuestion,
     SkippedDomain,
     Syllabus,
 )
@@ -127,6 +131,10 @@ def sample_syllabus() -> Syllabus:
                 key_topics=["IAM", "KMS"],
             ),
         ],
+        question_type_mix=[
+            QuestionTypeWeight(question_type="single_answer", weight_percent=80.0),
+            QuestionTypeWeight(question_type="multi_answer", weight_percent=20.0),
+        ],
         source_note="Based on the official SAA-C03 exam guide.",
         created_at=datetime.now(timezone.utc),
     )
@@ -141,7 +149,7 @@ def sample_assessment(sample_syllabus: Syllabus) -> Assessment:
         certification=sample_syllabus.certification,
         domains=sample_syllabus.domains,
         questions=[
-            Question(
+            SingleAnswerQuestion(
                 question_id="33333333-3333-3333-3333-333333333333",
                 domain_id="design-resilient-architectures",
                 difficulty="easy",
@@ -162,6 +170,68 @@ def sample_assessment(sample_syllabus: Syllabus) -> Assessment:
 
 
 @pytest.fixture
+def sample_assessment_all_types(sample_syllabus: Syllabus) -> Assessment:
+    """One question of each type — for exercising answer-key stripping and
+    answer submission across single_answer, multi_answer, fill_in_blank,
+    and full_text."""
+    return Assessment(
+        assessment_id="88888888-8888-8888-8888-888888888888",
+        syllabus_id=sample_syllabus.syllabus_id,
+        topic=sample_syllabus.topic,
+        certification=sample_syllabus.certification,
+        domains=sample_syllabus.domains,
+        questions=[
+            SingleAnswerQuestion(
+                question_id="q-single",
+                domain_id="design-resilient-architectures",
+                difficulty="easy",
+                stem="Which AWS service distributes traffic across Availability Zones?",
+                options=[
+                    QuestionOption(option_id="A", text="Elastic Load Balancing"),
+                    QuestionOption(option_id="B", text="Amazon S3"),
+                    QuestionOption(option_id="C", text="Amazon RDS"),
+                    QuestionOption(option_id="D", text="AWS Lambda"),
+                ],
+                correct_option_id="A",
+                explanation="ELB distributes traffic across healthy targets in multiple AZs.",
+            ),
+            MultiAnswerQuestion(
+                question_id="q-multi",
+                domain_id="design-resilient-architectures",
+                difficulty="medium",
+                stem="Which of these are AWS compute services? (select all that apply)",
+                options=[
+                    QuestionOption(option_id="A", text="EC2"),
+                    QuestionOption(option_id="B", text="Lambda"),
+                    QuestionOption(option_id="C", text="S3"),
+                    QuestionOption(option_id="D", text="RDS"),
+                ],
+                correct_option_ids=["A", "B"],
+                explanation="EC2 and Lambda are compute services; S3 and RDS are not.",
+            ),
+            FillInBlankQuestion(
+                question_id="q-fill",
+                domain_id="design-secure-architectures",
+                difficulty="easy",
+                stem="AWS's identity and access management service is abbreviated ___.",
+                accepted_answers=["IAM"],
+                explanation="IAM stands for Identity and Access Management.",
+            ),
+            FullTextQuestion(
+                question_id="q-text",
+                domain_id="design-secure-architectures",
+                difficulty="hard",
+                stem="Describe the principle of least privilege.",
+                rubric="Full credit requires mentioning minimal necessary permissions and reducing blast radius.",
+                explanation="Least privilege limits access to only what's needed for a task.",
+            ),
+        ],
+        num_questions=4,
+        created_at=datetime.now(timezone.utc),
+    )
+
+
+@pytest.fixture
 def sample_graded_assessment(sample_assessment: Assessment) -> GradedAssessment:
     return GradedAssessment(
         assessment_id=sample_assessment.assessment_id,
@@ -170,7 +240,9 @@ def sample_graded_assessment(sample_assessment: Assessment) -> GradedAssessment:
             QuestionResult(
                 question_id="33333333-3333-3333-3333-333333333333",
                 domain_id="design-resilient-architectures",
+                question_type="single_answer",
                 correct=True,
+                score_percent=100.0,
                 selected_option_id="A",
                 correct_option_id="A",
                 explanation="ELB distributes traffic across healthy targets in multiple AZs.",
