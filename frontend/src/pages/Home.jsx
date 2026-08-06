@@ -1,33 +1,57 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { generateLearningPath } from "../services/api";
+
+import { createAssessment, createSyllabus } from "../services/api";
+
+const STORAGE_KEY = "ai_generated_courses_session";
 
 function Home() {
   const navigate = useNavigate();
 
   const [certification, setCertification] = useState("");
   const [topic, setTopic] = useState("");
+  const [examDate, setExamDate] = useState("");
+  const [numQuestions, setNumQuestions] = useState(12);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleGenerate = async () => {
     if (!certification.trim() || !topic.trim()) {
-      alert("Please fill in all fields.");
+      setError("Please fill in all fields.");
       return;
     }
 
+    setError("");
     setLoading(true);
 
     try {
-      const response = await generateLearningPath({
-        certification,
-        topic,
-      });
+      const syllabusRes = await createSyllabus({ certification, topic });
+      const syllabus = syllabusRes.data;
 
-      console.log("Backend Response:", response.data);
-      navigate("/assessment");
-    } catch (error) {
-      console.error(error);
-      alert("Something went wrong.");
+      const assessmentRes = await createAssessment(syllabus.syllabus_id, {
+        numQuestions: Number(numQuestions) || 12,
+        examDate: examDate || null,
+      });
+      const assessment = assessmentRes.data;
+
+      const session = {
+        syllabus,
+        assessmentId: assessment.assessment_id,
+        questions: assessment.questions,
+        domains: assessment.domains,
+        examDate: examDate || null,
+      };
+
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+
+      navigate("/assessment", { state: session });
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.response?.data?.detail ||
+          err.message ||
+          "Something went wrong while generating your assessment."
+      );
     } finally {
       setLoading(false);
     }
@@ -67,7 +91,7 @@ function Home() {
 
           <input
             type="text"
-            placeholder="AWS Solutions Architect"
+            placeholder="AWS Solutions Architect Associate SAA-C03"
             value={certification}
             onChange={(e) => setCertification(e.target.value)}
             style={{
@@ -96,7 +120,7 @@ function Home() {
               width: "100%",
               padding: "14px",
               marginTop: "10px",
-              marginBottom: "28px",
+              marginBottom: "22px",
               borderRadius: "10px",
               border: "1px solid #cbd5e1",
               background: "#ffffff",
@@ -105,13 +129,63 @@ function Home() {
             }}
           />
 
+          <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
+            <div style={{ flex: "1 1 200px" }}>
+              <label style={{ display: "block", fontWeight: 700, color: "#111827" }}>
+                Exam date (optional)
+              </label>
+              <input
+                type="date"
+                value={examDate}
+                onChange={(e) => setExamDate(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  marginTop: "10px",
+                  marginBottom: "28px",
+                  borderRadius: "10px",
+                  border: "1px solid #cbd5e1",
+                  background: "#ffffff",
+                  color: "#111827",
+                  outline: "none",
+                }}
+              />
+            </div>
+
+            <div style={{ flex: "1 1 200px" }}>
+              <label style={{ display: "block", fontWeight: 700, color: "#111827" }}>
+                Number of questions
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={numQuestions}
+                onChange={(e) => setNumQuestions(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  marginTop: "10px",
+                  marginBottom: "28px",
+                  borderRadius: "10px",
+                  border: "1px solid #cbd5e1",
+                  background: "#ffffff",
+                  color: "#111827",
+                  outline: "none",
+                }}
+              />
+            </div>
+          </div>
+
+          {error && <p style={{ color: "#b91c1c" }}>{error}</p>}
+
           <button
             onClick={handleGenerate}
             disabled={loading}
             style={{
               padding: "14px 22px",
               fontSize: "16px",
-              cursor: "pointer",
+              cursor: loading ? "not-allowed" : "pointer",
               border: "none",
               borderRadius: "10px",
               backgroundColor: "#2563eb",

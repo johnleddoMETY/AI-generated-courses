@@ -1,32 +1,46 @@
+import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const STORAGE_KEY = "ai_generated_courses_assessment";
+import { createRoadmap } from "../services/api";
+
+const STORAGE_KEY = "ai_generated_courses_session";
+
+function loadSession(locationState) {
+  if (locationState?.graded) return locationState;
+
+  const saved = sessionStorage.getItem(STORAGE_KEY);
+  if (!saved) return null;
+
+  try {
+    return JSON.parse(saved);
+  } catch {
+    return null;
+  }
+}
+
+const proficiencyColor = {
+  weak: "#dc2626",
+  developing: "#d97706",
+  proficient: "#16a34a",
+};
 
 function Results() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  let results = location.state?.results;
+  const session = useMemo(() => loadSession(location.state), [location.state]);
+  const graded = session?.graded;
 
-  if (!results) {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        results = JSON.parse(saved)?.results;
-      } catch {
-        results = null;
-      }
-    }
-  }
+  const [generatingRoadmap, setGeneratingRoadmap] = useState(false);
+  const [error, setError] = useState("");
 
-  if (!results) {
+  if (!graded) {
     return (
       <div
         style={{
           maxWidth: "700px",
           margin: "60px auto",
           textAlign: "center",
-          fontFamily: "Arial, sans-serif",
           color: "#111827",
         }}
       >
@@ -53,32 +67,34 @@ function Results() {
   }
 
   const {
-    knowledgeScore,
-    masteryScore,
-    accuracyScore,
-    knowledgePoints,
-    masteryPoints,
-    maxKnowledgePoints,
-    minKnowledgePoints,
-    strongAreas,
-    weakAreas,
-    conceptStats,
-    likelyGuessCount,
-    overconfidentWrongCount,
-    uncertainWrongCount,
-  } = results;
+    overall_score_percent: overallScore,
+    domain_scores: domainScores,
+    gaps,
+    diagnostic_summary: diagnosticSummary,
+    strengths_summary: strengthsSummary,
+  } = graded;
 
-  const goToRoadmap = () => {
-    navigate("/roadmap", {
-      state: {
-        weakAreas,
-        strongAreas,
-        conceptStats,
-        knowledgeScore,
-        masteryScore,
-        accuracyScore,
-      },
-    });
+  const goToRoadmap = async () => {
+    setError("");
+    setGeneratingRoadmap(true);
+
+    try {
+      const { data: roadmap } = await createRoadmap(session.assessmentId, {
+        examDate: session.examDate,
+      });
+
+      const nextSession = { ...session, roadmap };
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(nextSession));
+
+      navigate("/roadmap", { state: nextSession });
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.response?.data?.detail || err.message || "Something went wrong building the roadmap."
+      );
+    } finally {
+      setGeneratingRoadmap(false);
+    }
   };
 
   return (
@@ -87,16 +103,12 @@ function Results() {
         maxWidth: "980px",
         margin: "50px auto",
         padding: "30px",
-        fontFamily: "Arial, sans-serif",
         color: "#111827",
       }}
     >
-      <h1 style={{ marginBottom: "10px", color: "#0f172a" }}>
-        Assessment Results
-      </h1>
+      <h1 style={{ marginBottom: "10px", color: "#0f172a" }}>Assessment Results</h1>
       <p style={{ color: "#475569", marginTop: 0 }}>
-        Knowledge score gives partial credit for correct answers, while mastery
-        score only trusts confident and consistent understanding.
+        Score is weighted by each exam domain's weight, then graded server-side.
       </p>
 
       <div
@@ -109,39 +121,10 @@ function Results() {
           boxShadow: "0 10px 28px rgba(37, 99, 235, 0.18)",
         }}
       >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: "16px",
-          }}
-        >
-          <div>
-            <h2 style={{ marginTop: 0, color: "#ffffff" }}>Knowledge Score</h2>
-            <h1 style={{ fontSize: "64px", margin: "6px 0", lineHeight: 1 }}>
-              {knowledgeScore}%
-            </h1>
-          </div>
-
-          <div>
-            <h2 style={{ marginTop: 0, color: "#ffffff" }}>Mastery Score</h2>
-            <h1 style={{ fontSize: "64px", margin: "6px 0", lineHeight: 1 }}>
-              {masteryScore}%
-            </h1>
-          </div>
-
-          <div>
-            <h2 style={{ marginTop: 0, color: "#ffffff" }}>Accuracy</h2>
-            <h1 style={{ fontSize: "64px", margin: "6px 0", lineHeight: 1 }}>
-              {accuracyScore}%
-            </h1>
-          </div>
-        </div>
-
-        <p style={{ marginBottom: 0, color: "#eff6ff", marginTop: "16px" }}>
-          Knowledge points: {knowledgePoints} / {maxKnowledgePoints} | Minimum:
-          {minKnowledgePoints}
-        </p>
+        <h2 style={{ marginTop: 0, color: "#ffffff" }}>Overall Score</h2>
+        <h1 style={{ fontSize: "64px", margin: "6px 0", lineHeight: 1 }}>
+          {overallScore.toFixed(1)}%
+        </h1>
       </div>
 
       <div
@@ -161,16 +144,8 @@ function Results() {
             boxShadow: "0 6px 24px rgba(15, 23, 42, 0.06)",
           }}
         >
-          <h2 style={{ marginTop: 0, color: "#0f172a" }}>Strong Concepts</h2>
-          {strongAreas.length === 0 ? (
-            <p style={{ color: "#475569" }}>No strong concepts yet.</p>
-          ) : (
-            <ul style={{ color: "#111827" }}>
-              {strongAreas.map((concept) => (
-                <li key={concept}>✅ {concept}</li>
-              ))}
-            </ul>
-          )}
+          <h2 style={{ marginTop: 0, color: "#0f172a" }}>Strengths</h2>
+          <p style={{ color: "#334155", lineHeight: 1.6 }}>{strengthsSummary}</p>
         </div>
 
         <div
@@ -182,138 +157,113 @@ function Results() {
             boxShadow: "0 6px 24px rgba(15, 23, 42, 0.06)",
           }}
         >
-          <h2 style={{ marginTop: 0, color: "#0f172a" }}>
-            Concepts To Improve
-          </h2>
-          {weakAreas.length === 0 ? (
-            <p style={{ color: "#475569" }}>Excellent! No weak concepts detected.</p>
-          ) : (
-            <ul style={{ color: "#111827" }}>
-              {weakAreas.map((concept) => (
-                <li key={concept}>📘 {concept}</li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div
-          style={{
-            border: "1px solid #e5e7eb",
-            borderRadius: "14px",
-            padding: "20px",
-            background: "#ffffff",
-            boxShadow: "0 6px 24px rgba(15, 23, 42, 0.06)",
-          }}
-        >
-          <h2 style={{ marginTop: 0, color: "#0f172a" }}>
-            Guessing Indicators
-          </h2>
-          <ul style={{ color: "#111827" }}>
-            <li>Likely correct guesses: {likelyGuessCount}</li>
-            <li>Overconfident wrong answers: {overconfidentWrongCount}</li>
-            <li>Uncertain wrong answers: {uncertainWrongCount}</li>
-          </ul>
+          <h2 style={{ marginTop: 0, color: "#0f172a" }}>Diagnosis</h2>
+          <p style={{ color: "#334155", lineHeight: 1.6 }}>{diagnosticSummary}</p>
         </div>
       </div>
 
-      <h2 style={{ marginTop: "40px", color: "#0f172a" }}>
-        Concept Breakdown
-      </h2>
+      <h2 style={{ marginTop: "40px", color: "#0f172a" }}>Domain Scores</h2>
 
-      {Object.entries(conceptStats).map(([concept, stats]) => {
-        const percent = Math.round((stats.correct / stats.total) * 100);
-
-        return (
+      {domainScores.map((domain) => (
+        <div
+          key={domain.domain_id}
+          style={{
+            border: "1px solid #e5e7eb",
+            borderRadius: "12px",
+            padding: "16px",
+            marginBottom: "16px",
+            background: "#ffffff",
+            boxShadow: "0 6px 24px rgba(15, 23, 42, 0.06)",
+          }}
+        >
           <div
-            key={concept}
             style={{
-              border: "1px solid #e5e7eb",
-              borderRadius: "12px",
-              padding: "16px",
-              marginBottom: "16px",
-              background: "#ffffff",
-              boxShadow: "0 6px 24px rgba(15, 23, 42, 0.06)",
+              display: "flex",
+              justifyContent: "space-between",
+              gap: "12px",
+              alignItems: "center",
+              marginBottom: "10px",
+              flexWrap: "wrap",
+            }}
+          >
+            <h3 style={{ margin: 0, color: "#0f172a" }}>
+              {domain.domain_name}{" "}
+              <span style={{ color: "#94a3b8", fontWeight: 400, fontSize: "14px" }}>
+                (weight {domain.weight_percent}%)
+              </span>
+            </h3>
+            <span
+              style={{
+                color: "#ffffff",
+                background: proficiencyColor[domain.proficiency] || "#64748b",
+                borderRadius: "999px",
+                padding: "4px 12px",
+                fontSize: "12px",
+                fontWeight: 700,
+                textTransform: "capitalize",
+              }}
+            >
+              {domain.proficiency}
+            </span>
+          </div>
+
+          <div
+            style={{
+              height: "12px",
+              background: "#e2e8f0",
+              borderRadius: "999px",
+              overflow: "hidden",
             }}
           >
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: "12px",
-                alignItems: "center",
-                marginBottom: "10px",
-                flexWrap: "wrap",
+                width: `${domain.score_percent}%`,
+                background: domain.score_percent >= 70 ? "#16a34a" : "#2563eb",
+                height: "100%",
               }}
-            >
-              <h3 style={{ margin: 0, color: "#0f172a" }}>{concept}</h3>
-              <span style={{ color: "#475569" }}>
-                Correct: {stats.correct} / {stats.total}
-              </span>
-            </div>
-
-            <div
-              style={{
-                height: "12px",
-                background: "#e2e8f0",
-                borderRadius: "999px",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: `${percent}%`,
-                  background: percent >= 70 ? "#16a34a" : "#2563eb",
-                  height: "100%",
-                }}
-              />
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                gap: "10px",
-                marginTop: "12px",
-                color: "#475569",
-              }}
-            >
-              <p style={{ margin: 0 }}>Mastery: {stats.masteryPercent}%</p>
-              <p style={{ margin: 0 }}>
-                Confidence quality: {stats.confidenceQuality}%
-              </p>
-              <p style={{ margin: 0 }}>
-                Likely guesses: {stats.lowConfidenceCorrect}
-              </p>
-              <p style={{ margin: 0 }}>
-                Concept points: {stats.masteryPoints} mastery /{" "}
-                {stats.knowledgePoints} knowledge
-              </p>
-            </div>
-
-            {stats.likelyGuessQuestions.length > 0 && (
-              <div style={{ marginTop: "12px", color: "#7c2d12" }}>
-                <strong>Possible guesses:</strong>
-                <ul style={{ marginTop: "6px" }}>
-                  {stats.likelyGuessQuestions.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {stats.overconfidentWrongQuestions.length > 0 && (
-              <div style={{ marginTop: "12px", color: "#991b1b" }}>
-                <strong>Overconfident wrong answers:</strong>
-                <ul style={{ marginTop: "6px" }}>
-                  {stats.overconfidentWrongQuestions.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            />
           </div>
-        );
-      })}
+
+          <p style={{ margin: "10px 0 0", color: "#475569" }}>
+            {domain.questions_correct} / {domain.questions_total} correct — {domain.score_percent}%
+          </p>
+        </div>
+      ))}
+
+      {gaps.length > 0 && (
+        <>
+          <h2 style={{ marginTop: "40px", color: "#0f172a" }}>Knowledge Gaps</h2>
+          {gaps.map((gap, index) => (
+            <div
+              key={`${gap.domain_id}-${index}`}
+              style={{
+                border: "1px solid #e5e7eb",
+                borderRadius: "12px",
+                padding: "16px",
+                marginBottom: "12px",
+                background: "#ffffff",
+                boxShadow: "0 6px 24px rgba(15, 23, 42, 0.06)",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                <strong style={{ color: "#0f172a" }}>{gap.domain_id}</strong>
+                <span
+                  style={{
+                    color: gap.severity === "critical" ? "#b91c1c" : "#92400e",
+                    fontWeight: 700,
+                    textTransform: "capitalize",
+                  }}
+                >
+                  {gap.severity}
+                </span>
+              </div>
+              <p style={{ color: "#334155", margin: "8px 0 0" }}>{gap.gap_summary}</p>
+            </div>
+          ))}
+        </>
+      )}
+
+      {error && <p style={{ color: "#b91c1c" }}>{error}</p>}
 
       <div
         style={{
@@ -341,17 +291,18 @@ function Results() {
 
         <button
           onClick={goToRoadmap}
+          disabled={generatingRoadmap}
           style={{
             padding: "12px 20px",
             borderRadius: "10px",
             border: "none",
             background: "#2563eb",
             color: "white",
-            cursor: "pointer",
+            cursor: generatingRoadmap ? "not-allowed" : "pointer",
             fontWeight: 700,
           }}
         >
-          View Learning Roadmap
+          {generatingRoadmap ? "Building Roadmap..." : "View Learning Roadmap"}
         </button>
       </div>
     </div>

@@ -1,109 +1,145 @@
+import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const STORAGE_KEY = "ai_generated_courses_assessment";
+import { createCourse } from "../services/api";
+
+const STORAGE_KEY = "ai_generated_courses_session";
+
+function loadSession(locationState) {
+  if (locationState?.roadmap) return locationState;
+
+  const saved = sessionStorage.getItem(STORAGE_KEY);
+  if (!saved) return null;
+
+  try {
+    return JSON.parse(saved);
+  } catch {
+    return null;
+  }
+}
 
 function Roadmap() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  let weakAreas = location.state?.weakAreas || [];
-  let strongAreas = location.state?.strongAreas || [];
+  const session = useMemo(() => loadSession(location.state), [location.state]);
+  const roadmap = session?.roadmap;
 
-  if (weakAreas.length === 0 && strongAreas.length === 0) {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        weakAreas = parsed?.results?.weakAreas || [];
-        strongAreas = parsed?.results?.strongAreas || [];
-      } catch {
-        weakAreas = [];
-        strongAreas = [];
-      }
-    }
+  const [generatingCourse, setGeneratingCourse] = useState(false);
+  const [error, setError] = useState("");
+
+  if (!roadmap) {
+    return (
+      <div style={{ maxWidth: "700px", margin: "60px auto", textAlign: "center", color: "#111827" }}>
+        <h1 style={{ color: "#0f172a" }}>No Roadmap Found</h1>
+        <p style={{ color: "#475569" }}>View your results first to build a roadmap.</p>
+        <button
+          onClick={() => navigate("/results")}
+          style={{
+            marginTop: "20px",
+            padding: "12px 20px",
+            borderRadius: "10px",
+            border: "none",
+            background: "#2563eb",
+            color: "white",
+            cursor: "pointer",
+            fontWeight: 700,
+          }}
+        >
+          Back to Results
+        </button>
+      </div>
+    );
   }
 
-  const lessonLibrary = {
-    IAM: [
-      "IAM users, groups, roles, and policies",
-      "Temporary credentials and role-based access",
-      "Least privilege access design",
-    ],
-    S3: [
-      "Buckets, objects, and storage classes",
-      "Static website hosting",
-      "Bucket policies and permissions",
-    ],
-    EC2: [
-      "Launching and managing virtual servers",
-      "Security groups and key pairs",
-      "Choosing EC2 instance types",
-    ],
-    Security: [
-      "AWS KMS basics",
-      "Encryption at rest vs in transit",
-      "Key management and rotation",
-    ],
-    Networking: [
-      "Security groups vs network ACLs",
-      "Inbound and outbound traffic control",
-      "VPC basics and subnet concepts",
-    ],
-    Storage: [
-      "Object storage fundamentals",
-      "S3 use cases",
-      "When to choose storage services",
-    ],
+  const course = session?.course;
+
+  const handleGenerateCourse = async () => {
+    setError("");
+    setGeneratingCourse(true);
+
+    try {
+      const { data: generatedCourse } = await createCourse(roadmap.roadmap_id);
+      const nextSession = { ...session, course: generatedCourse };
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(nextSession));
+      navigate("/roadmap", { state: nextSession, replace: true });
+    } catch (err) {
+      console.error(err);
+      setError(
+        err.response?.data?.detail || err.message || "Something went wrong generating the course."
+      );
+    } finally {
+      setGeneratingCourse(false);
+    }
   };
 
-  const defaultRoadmap = [
-    "Review the assessment concepts",
-    "Study the weak areas identified in your score",
-    "Practice scenario-based questions",
-  ];
-
-  const roadmapTopics =
-    weakAreas.length > 0
-      ? weakAreas.flatMap((area) => {
-          const lessons = lessonLibrary[area] || [`Intro to ${area}`];
-          return lessons.map((lesson) => ({
-            concept: area,
-            title: lesson,
-          }));
-        })
-      : defaultRoadmap.map((item) => ({
-          concept: "General",
-          title: item,
-        }));
+  const startLesson = (item) => {
+    const lesson = course?.lessons?.find((l) => l.item_id === item.item_id);
+    navigate("/lesson", {
+      state: {
+        ...session,
+        item,
+        lesson: lesson || null,
+      },
+    });
+  };
 
   return (
-    <div
-      style={{
-        maxWidth: "900px",
-        margin: "50px auto",
-        padding: "30px",
-        fontFamily: "Arial, sans-serif",
-        color: "#111827",
-      }}
-    >
+    <div style={{ maxWidth: "900px", margin: "50px auto", padding: "30px", color: "#111827" }}>
       <h1 style={{ marginBottom: "10px", color: "#0f172a" }}>
         Personalized Learning Roadmap
       </h1>
 
+      <p style={{ color: "#475569", marginTop: 0 }}>{roadmap.guidance_summary}</p>
       <p style={{ color: "#475569", marginTop: 0 }}>
-        Strong areas: {strongAreas.length > 0 ? strongAreas.join(", ") : "None"}
+        Total estimated study time: {roadmap.total_estimated_hours} hours
       </p>
 
-      <div
-        style={{
-          marginTop: "24px",
-          display: "grid",
-          gap: "16px",
-        }}
-      >
-        {roadmapTopics.map((topic, index) => (
+      {roadmap.skipped_domains.length > 0 && (
+        <p style={{ color: "#475569", marginTop: 0 }}>
+          Skipped (already proficient):{" "}
+          {roadmap.skipped_domains.map((d) => d.domain_id).join(", ")}
+        </p>
+      )}
+
+      {!course && (
+        <div
+          style={{
+            marginTop: "16px",
+            padding: "16px",
+            borderRadius: "12px",
+            background: "#eff6ff",
+            border: "1px solid #bfdbfe",
+          }}
+        >
+          <p style={{ margin: "0 0 12px", color: "#1e3a8a" }}>
+            Generate lesson content for every item below (one LLM call per item — this can take a
+            while).
+          </p>
+          <button
+            onClick={handleGenerateCourse}
+            disabled={generatingCourse}
+            style={{
+              padding: "12px 18px",
+              borderRadius: "10px",
+              border: "none",
+              background: "#2563eb",
+              color: "white",
+              cursor: generatingCourse ? "not-allowed" : "pointer",
+              fontWeight: 700,
+            }}
+          >
+            {generatingCourse ? "Generating course..." : "Generate Full Course"}
+          </button>
+        </div>
+      )}
+
+      {error && <p style={{ color: "#b91c1c" }}>{error}</p>}
+
+      <div style={{ marginTop: "24px", display: "grid", gap: "16px" }}>
+        {roadmap.items.map((item) => (
           <div
-            key={`${topic.concept}-${index}`}
+            key={item.item_id}
             style={{
               border: "1px solid #e5e7eb",
               borderRadius: "14px",
@@ -122,21 +158,26 @@ function Roadmap() {
               }}
             >
               <div>
-                <h3 style={{ margin: 0, color: "#0f172a" }}>{topic.title}</h3>
-                <p style={{ margin: "6px 0 0", color: "#475569" }}>
-                  Concept: {topic.concept}
+                <h3 style={{ margin: 0, color: "#0f172a" }}>
+                  {item.priority}. {item.title}
+                </h3>
+                <p style={{ margin: "6px 0 0", color: "#475569" }}>{item.objective}</p>
+                <p style={{ margin: "6px 0 0", color: "#94a3b8", fontSize: "13px" }}>
+                  {item.estimated_hours}h · {item.subtopics.join(", ")}
                 </p>
               </div>
 
               <button
-                onClick={() => navigate("/lesson", { state: { topic } })}
+                onClick={() => startLesson(item)}
+                disabled={!course}
+                title={!course ? "Generate the course first" : undefined}
                 style={{
                   padding: "10px 16px",
                   borderRadius: "10px",
                   border: "none",
-                  background: "#2563eb",
+                  background: course ? "#2563eb" : "#94a3b8",
                   color: "white",
-                  cursor: "pointer",
+                  cursor: course ? "pointer" : "not-allowed",
                   fontWeight: 700,
                 }}
               >
