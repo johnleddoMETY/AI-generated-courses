@@ -45,11 +45,74 @@ Run the demo:
 ```bash
 python demo_cli.py --topic "Cloud Architecture" \
   --certification "AWS Solutions Architect Associate SAA-C03" \
-  --exam-date 2026-09-15 --num-questions 12
+  --exam-date 2026-09-15 --num-questions 12 \
+  --random-answers --json-out artifacts
 ```
 
 Flags: `--random-answers` (non-interactive), `--json-out artifacts/` (dump
 every stage's JSON — use these as your example payloads).
+
+Example output:
+
+```
+                                                              Syllabus — AWS Solutions Architect Associate SAA-C03 (SAA-C03)
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Domain                                       ┃ Weight ┃ Key topics                                                                                                                     ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ Design Resilient Architectures               │    30% │ High availability and fault tolerance, Decoupling mechanisms, Elasticity and scalability, Multi-tier architecture design       │
+│ Design High-Performing Architectures         │    28% │ Performance optimization techniques, Caching strategies, Load balancing, Database optimization                                 │
+│ Design Secure Applications and Architectures │    24% │ Identity and access management, Data encryption methods, Network security best practices, Compliance and governance frameworks │
+│ Design Cost-Optimized Architectures          │    18% │ Cost estimation and management, Resource optimization, Pricing models for AWS services, Cost-effective storage solutions       │
+└──────────────────────────────────────────────┴────────┴────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+Source: This blueprint is based on the official AWS certification documentation for the Solutions Architect Associate exam (SAA-C03) and reflects the current exam structure.
+
+╭────────────────────────────────────────────────────────────────────────────────────────────────── Results ──────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ 32.8% overall (weighted by exam domain weight)                                                                                                                                                              │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+                                    Per-domain scores
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━┓
+┃ Domain                                       ┃ Weight ┃ Score ┃ Correct ┃ Proficiency ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━┩
+│ Design Resilient Architectures               │    30% │ 25.0% │     1/4 │ weak        │
+│ Design High-Performing Architectures         │    28% │ 33.3% │     1/3 │ weak        │
+│ Design Secure Applications and Architectures │    24% │ 66.7% │     2/3 │ developing  │
+│ Design Cost-Optimized Architectures          │    18% │  0.0% │     0/2 │ weak        │
+└──────────────────────────────────────────────┴────────┴───────┴─────────┴─────────────┘
+
+Diagnosis: The learner has critical gaps in understanding resilient and cost-optimized architectures, which
+are foundational for further topics. Their performance in high-performing architectures shows some
+understanding, but specific concepts need clarification. Overall, the learner requires focused study on key
+AWS services and their roles in architecture design.
+Strengths: The learner demonstrates a developing understanding of secure applications and architectures,
+correctly identifying AWS KMS for encryption management and AWS IAM for access control.
+
+                                                                                          Study roadmap (17.0h total)
+┏━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ # ┃ Title                                                   ┃ Domain                               ┃ Hours ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ 1 │ Understand Cost Optimization Strategies                 │ design-cost-optimized-architectures  │   4.0 │
+│ 2 │ Learn Effective Cost Management Practices               │ design-cost-optimized-architectures  │   3.0 │
+│ 3 │ Clarify AWS Elastic Load Balancing vs. Route 53         │ design-resilient-architectures       │   2.0 │
+│ 4 │ Understand Load Balancer Health Checks vs. RDS Multi-AZ │ design-resilient-architectures       │   2.0 │
+│ 5 │ Differentiate AWS Auto Scaling and Elastic Beanstalk    │ design-resilient-architectures       │   2.0 │
+│ 6 │ Clarify Caching Strategies: ElastiCache vs. S3          │ design-high-performing-architectures │   2.0 │
+│ 7 │ Optimize Database Query Performance                     │ design-high-performing-architectures │   2.0 │
+└───┴─────────────────────────────────────────────────────────┴──────────────────────────────────────┴───────┘
+
+                                 Course — 7 lesson(s), 17.0h total
+┏━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━┓
+┃ # ┃ Lesson                                                  ┃ Sections ┃ Examples ┃ Practice Qs ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━┩
+│ 1 │ Understand Cost Optimization Strategies                 │        4 │        2 │           3 │
+│ 2 │ Learn Effective Cost Management Practices               │        3 │        2 │           3 │
+│ 3 │ Clarify AWS Elastic Load Balancing vs. Route 53         │        4 │        2 │           5 │
+│ 4 │ Understand Load Balancer Health Checks vs. RDS Multi-AZ │        4 │        2 │           3 │
+│ 5 │ Differentiate AWS Auto Scaling and Elastic Beanstalk    │        4 │        2 │           3 │
+│ 6 │ Clarify Caching Strategies: ElastiCache vs. S3          │        4 │        2 │           3 │
+│ 7 │ Optimize Database Query Performance                     │        4 │        2 │           3 │
+└───┴─────────────────────────────────────────────────────────┴──────────┴──────────┴─────────────┘
+Artifacts written to artifacts/
+```
 
 Expect the demo to take a couple minutes. Stage 5 writes a full lesson per
 roadmap item, one call each, run concurrently via a thread pool — it logs

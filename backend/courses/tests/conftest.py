@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 
+import jwt
 import pytest
+from cryptography.hazmat.primitives.asymmetric import ec
 from llm_engine import (
     Assessment,
     Course,
@@ -47,8 +49,60 @@ def _clean_llm_env(monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv(name, raising=False)
 
 
+# Real Supabase projects sign session tokens with an asymmetric key (ES256)
+# verified via a JWKS endpoint. Tests mint their own keypair and monkeypatch
+# the JWKS lookup so auth verification works offline, without a live
+# Supabase project or network access.
+_TEST_PRIVATE_KEY = ec.generate_private_key(ec.SECP256R1())
+_TEST_PUBLIC_KEY = _TEST_PRIVATE_KEY.public_key()
+
+
+class _FakeSigningKey:
+    def __init__(self, key) -> None:
+        self.key = key
+
+
+class _FakeJWKSClient:
+    def get_signing_key_from_jwt(self, token: str) -> _FakeSigningKey:
+        return _FakeSigningKey(_TEST_PUBLIC_KEY)
+
+
+@pytest.fixture(autouse=True)
+def _patch_jwks_client(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("courses.authentication._get_jwks_client", lambda: _FakeJWKSClient())
+
+
+# Matches every test fixture's Syllabus.owner_id below, so api_client (and
+# anything it creates) is treated as the same authenticated user.
+TEST_USER_ID = "test-user-id"
+OTHER_USER_ID = "other-user-id"
+
+
+def _make_token(sub: str = TEST_USER_ID, email: str = "test@example.com") -> str:
+    return jwt.encode(
+        {"sub": sub, "email": email, "aud": "authenticated", "role": "authenticated"},
+        _TEST_PRIVATE_KEY,
+        algorithm="ES256",
+    )
+
+
 @pytest.fixture
 def api_client() -> APIClient:
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {_make_token()}")
+    return client
+
+
+@pytest.fixture
+def other_user_client() -> APIClient:
+    """A different authenticated user — for cross-user isolation tests."""
+    client = APIClient()
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {_make_token(sub=OTHER_USER_ID, email='other@example.com')}")
+    return client
+
+
+@pytest.fixture
+def anonymous_client() -> APIClient:
     return APIClient()
 
 

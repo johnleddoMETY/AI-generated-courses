@@ -5,8 +5,8 @@ from courses.models import Assessment, Course, GradedAssessment, Roadmap, Syllab
 
 @admin.register(Syllabus)
 class SyllabusAdmin(admin.ModelAdmin):
-    list_display = ("syllabus_id", "topic", "certification", "created_at")
-    search_fields = ("topic", "certification")
+    list_display = ("syllabus_id", "owner_id", "topic", "certification", "created_at")
+    search_fields = ("topic", "certification", "owner_id")
 
 
 @admin.register(Assessment)

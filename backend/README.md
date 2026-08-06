@@ -90,12 +90,16 @@ stored object goes back into an `llm_engine` service function, it's
 rebuilt with `Model.model_validate(row.payload)`.
 
 ```
-Syllabus(syllabus_id, topic, certification, exam_code, payload)
+Syllabus(syllabus_id, owner_id, topic, certification, exam_code, payload)
   └── Assessment(assessment_id, syllabus FK, payload)
         ├── GradedAssessment(assessment FK/PK, payload)
         └── Roadmap(roadmap_id, assessment FK, syllabus FK, payload)
               └── Course(course_id, roadmap FK, payload)
 ```
+
+`Syllabus.owner_id` (the Supabase user's `sub` claim) is the root of the
+ownership chain — see the Auth section below for how downstream models
+are scoped by it.
 
 **Security rule:** `Assessment.payload` includes `correct_option_id` and
 `explanation` for every question — this row must never be returned to a
@@ -118,6 +122,7 @@ All endpoints live under `/api/` (see `courses/urls.py`).
 | `POST` | `/api/assessment/<assessment_id>/roadmap/` | Generate a gap-targeted study roadmap from grading results |
 | `POST` | `/api/roadmap/<roadmap_id>/course/` | Generate a full text course (one lesson per roadmap item) |
 | `GET` | `/api/course/<course_id>/` | Fetch a stored course |
+| `POST` | `/api/course/<course_id>/lesson/<item_id>/regenerate/` | Regenerate one lesson and swap it into the stored course |
 
 ### `POST /api/syllabus/`
 ```json
@@ -154,22 +159,68 @@ Requires a `GradedAssessment` to already exist for that assessment.
 Returns the `Roadmap` payload, `201`.
 
 ### `POST /api/roadmap/<roadmap_id>/course/`
-No request body. Generates one lesson per roadmap item, sequentially —
-this is by far the slowest and most expensive call in the pipeline (one
-LLM call per item, "textbook-length" output each). Returns the full
-`Course` payload, `201`.
+No request body. Generates one lesson per roadmap item — `llm_engine`
+now fans these out concurrently via a thread pool rather than one at a
+time, but it's still by far the slowest and most expensive call in the
+pipeline (one LLM call per item, "textbook-length" output each). Returns
+the full `Course` payload, `201`.
 
-> **Caveat:** this currently runs synchronously inside the request, same
-> as the other four endpoints, purely to match the existing pattern. The
-> pipeline README explicitly recommends treating course generation as a
-> background job instead — worth moving to one (e.g. Celery/RQ) before
-> this is client-facing, so a slow/failed generation doesn't hold open an
-> HTTP connection.
+> **Caveat:** this still runs synchronously inside the request — the view
+> blocks until every lesson comes back, same as the other endpoints,
+> purely to match the existing pattern. Concurrency inside `llm_engine`
+> makes it faster, but doesn't change that; the pipeline README still
+> recommends treating course generation as a background job. Worth
+> moving to one (e.g. Celery/RQ) before this is client-facing, so a
+> slow/failed generation doesn't hold open an HTTP connection.
 
 ### `GET /api/course/<course_id>/`
 Returns the stored `Course` payload, `200`. No stripping needed here —
 unlike `Assessment`, `Lesson.practice_questions` are open-ended study
 material meant to be shown with their answers.
+
+### `POST /api/course/<course_id>/lesson/<item_id>/regenerate/`
+No request body. Regenerates a single lesson (one LLM call, via
+`generate_lesson`) and swaps it into the stored `Course.payload` by
+matching `item_id`, without touching the rest of the course. Returns the
+regenerated `Lesson` payload, `200`. Useful for refreshing stale content
+or retrying one lesson that came out bad — much cheaper than regenerating
+the whole course. 404s if the course doesn't exist or if `item_id` isn't
+one of the roadmap items the course was built from.
+
+## Auth
+
+Every endpoint requires a valid **Supabase-issued JWT** — `DEFAULT_PERMISSION_CLASSES`
+is set to `IsAuthenticated` project-wide, so nothing is reachable
+unauthenticated by default.
+
+- **Login/registration happen entirely on the frontend** via `supabase-js`
+  — Django has no register/login endpoints of its own and never sees a
+  password. The frontend sends the access token Supabase returns as
+  `Authorization: Bearer <token>` on every request.
+- `courses/authentication.py`'s `SupabaseJWTAuthentication` verifies the
+  token against your project's **JWKS endpoint**
+  (`<SUPABASE_URL>/auth/v1/.well-known/jwks.json`, fetched via
+  `PyJWKClient`) and checks `aud == "authenticated"`. Current Supabase
+  projects sign session tokens with an asymmetric key (ES256) rotated
+  through this endpoint, not a static shared secret — so there's no
+  secret to configure, just `SUPABASE_URL` (Project Settings → API →
+  Project URL). On success it sets `request.user` to a lightweight,
+  non-persisted `SupabaseUser` (just `id`/`email` from the token claims)
+  — no local `User` row is created or required.
+- **Per-resource ownership is enforced.** `Syllabus.owner_id` (the JWT
+  `sub` claim) is the root of the ownership chain — every downstream
+  model (`Assessment`, `Roadmap`, `Course`) is scoped by following its
+  foreign keys back to `Syllabus.owner_id`, e.g.
+  `get_object_or_404(Course, course_id=..., roadmap__syllabus__owner_id=request.user.id)`.
+  A record that exists but belongs to a different user 404s — deliberately,
+  not `403`, so requests can't be used to probe which IDs exist.
+- Missing/invalid tokens get `401` with a `WWW-Authenticate: Bearer`
+  header.
+- **Tests don't need a real Supabase project.** They mint their own
+  ES256-signed token against a local test keypair and monkeypatch the
+  JWKS lookup (`courses.authentication._get_jwks_client`), so the whole
+  suite runs offline. `demo_api.sh` **does** need a real project — see
+  its script for how it fetches a token.
 
 ## Request validation & error handling
 
@@ -199,21 +250,20 @@ cd backend
 pytest
 ```
 
-`courses/tests/` covers all five endpoints
+`courses/tests/` covers all eight endpoints plus the auth gate itself
 (`test_syllabus_api.py`, `test_assessment_api.py`, `test_grading_api.py`,
-`test_roadmap_api.py`, `test_course_api.py`), with shared fixtures in
-`tests/conftest.py` building fake `llm_engine` objects and an isolated
-`APIClient` (LLM-related env vars are cleared per-test so real
-credentials never leak into test runs). See the "Running the test suite"
-note above for the one-time MySQL grant needed against the Docker
-container.
+`test_roadmap_api.py`, `test_course_api.py`, `test_authentication.py`),
+with shared fixtures in `tests/conftest.py` building fake `llm_engine`
+objects and an authenticated `APIClient` (LLM-related env vars are
+cleared per-test so real credentials never leak into test runs). See the
+"Running the test suite" note above for the one-time MySQL grant needed
+against the Docker container.
 
 ## Known gaps / next steps
 
-- No auth — any client can read/write any `syllabus_id`/`assessment_id`.
-  Needed before this is multi-user safe.
 - No list endpoints (e.g. "all syllabuses for a user") — only
-  create/retrieve by ID.
+  create/retrieve by ID. Now that records are owned by a user, this is
+  the natural next step.
 - Course generation (`POST /api/roadmap/<roadmap_id>/course/`) runs
   synchronously — see the caveat under that endpoint above. Should move
   to a background job queue before it's client-facing.
@@ -222,3 +272,8 @@ container.
   isn't in that compose file yet.
 - Settings are dev-only (`DEBUG=true`, a placeholder `SECRET_KEY`
   default) — no prod/dev split yet.
+- Parallel lesson fan-out (`generate_course`'s thread pool) is fail-fast:
+  lessons already in flight when one fails are not cancelled but their
+  results are discarded either way. No partial-course recovery — a
+  failed `POST .../course/` needs a full retry, though individual lessons
+  can be fixed after the fact via the regenerate endpoint.

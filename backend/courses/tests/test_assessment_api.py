@@ -3,6 +3,7 @@ import json
 import pytest
 
 from courses.models import Assessment, Syllabus
+from courses.tests.conftest import TEST_USER_ID
 
 _SECRET_FIELDS = ("correct_option_id", "explanation")
 
@@ -10,6 +11,7 @@ _SECRET_FIELDS = ("correct_option_id", "explanation")
 def _make_syllabus_row(sample_syllabus):
     return Syllabus.objects.create(
         syllabus_id=sample_syllabus.syllabus_id,
+        owner_id=TEST_USER_ID,
         topic=sample_syllabus.topic,
         certification=sample_syllabus.certification,
         exam_code=sample_syllabus.exam_code,
@@ -67,3 +69,19 @@ def test_retrieve_assessment_strips_answer_key(api_client, sample_syllabus, samp
     body_text = json.dumps(response.json())
     for field in _SECRET_FIELDS:
         assert field not in body_text
+
+
+@pytest.mark.django_db
+def test_retrieve_assessment_404_for_a_different_users_assessment(
+    other_user_client, sample_syllabus, sample_assessment
+):
+    syllabus_row = _make_syllabus_row(sample_syllabus)
+    Assessment.objects.create(
+        assessment_id=sample_assessment.assessment_id,
+        syllabus=syllabus_row,
+        payload=sample_assessment.model_dump(mode="json"),
+    )
+
+    response = other_user_client.get(f"/api/assessment/{sample_assessment.assessment_id}/")
+
+    assert response.status_code == 404

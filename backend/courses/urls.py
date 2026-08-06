@@ -6,6 +6,7 @@ from courses.views import (
     CourseCreateView,
     CourseRetrieveView,
     GradeAssessmentView,
+    LessonRegenerateView,
     RoadmapCreateView,
     SyllabusCreateView,
 )
@@ -41,5 +42,10 @@ urlpatterns = [
         "course/<str:course_id>/",
         CourseRetrieveView.as_view(),
         name="course-retrieve",
+    ),
+    path(
+        "course/<str:course_id>/lesson/<str:item_id>/regenerate/",
+        LessonRegenerateView.as_view(),
+        name="lesson-regenerate",
     ),
 ]
