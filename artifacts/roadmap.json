@@ -1,160 +1,182 @@
 {
-  "roadmap_id": "7c6249d6-ecc7-48f5-8ec5-f83395f01968",
-  "assessment_id": "697874f8-ef15-4537-9eae-d359f23acb6d",
-  "syllabus_id": "8b21b0a6-b59a-4884-a331-efd769b8faa4",
+  "roadmap_id": "77a78245-8df2-4ff2-a848-b93e972e226a",
+  "assessment_id": "416c685f-6add-4e6b-8086-1cc6b94231c9",
+  "syllabus_id": "a0208f73-6a44-4efc-8ee7-9f6b98e87074",
   "topic": "Cloud Architecture",
   "certification": "AWS Solutions Architect Associate SAA-C03",
   "exam_date": "2026-09-15",
   "items": [
     {
-      "item_id": "152f8018-e145-4035-95b2-e64953864b49",
-      "domain_id": "design-resilient-architectures",
-      "title": "Understanding Elastic Load Balancing vs. Amazon S3",
-      "objective": "Clarify the roles and functionalities of Elastic Load Balancing and Amazon S3 in achieving high availability.",
+      "item_id": "a8701d67-076c-4c80-83c8-8fa93234786e",
+      "domain_id": "design-cost-optimized-architectures",
+      "title": "Understand Cost Optimization Strategies",
+      "objective": "Identify and differentiate between on-demand and reserved instances.",
       "subtopics": [
-        "Elastic Load Balancing overview",
-        "Amazon S3 overview",
-        "High availability strategies"
+        "Cost estimation and management",
+        "Resource optimization",
+        "Pricing models for AWS services"
       ],
-      "why_included": "Critical gap identified: Confuses the role of Elastic Load Balancing with Amazon S3 in distributing traffic for high availability.",
+      "why_included": "The learner scored 0.0% in this domain and lacks understanding of cost optimization strategies, confusing on-demand instances with Reserved Instances (evidence: 014c45c2-d12f-4f28-899b-e18062401d5c).",
       "priority": 1,
+      "estimated_hours": 4.0,
+      "prerequisites": []
+    },
+    {
+      "item_id": "7240e788-432f-45e5-aecf-de104a006ef5",
+      "domain_id": "design-cost-optimized-architectures",
+      "title": "Learn Effective Cost Management Practices",
+      "objective": "Explain the need for auto-scaling versus keeping resources running continuously.",
+      "subtopics": [
+        "Cost estimation and management",
+        "Resource optimization"
+      ],
+      "why_included": "The learner scored 0.0% in this domain and misunderstands effective cost management practices (evidence: 357c180a-64f9-455d-b60d-2afa6230fcec).",
+      "priority": 2,
       "estimated_hours": 3.0,
       "prerequisites": []
     },
     {
-      "item_id": "cd7b02c8-9e11-4e65-8fa2-4cc14f79a292",
-      "domain_id": "design-secure-applications-and-architectures",
-      "title": "AWS IAM Fundamentals",
-      "objective": "Understand the purpose of AWS IAM in managing user identities and permissions.",
+      "item_id": "fa18712b-8b14-4f2b-839f-83c90e8ee7ae",
+      "domain_id": "design-resilient-architectures",
+      "title": "Clarify AWS Elastic Load Balancing vs. Route 53",
+      "objective": "Differentiate the roles of AWS Elastic Load Balancer and AWS Route 53 in traffic distribution.",
       "subtopics": [
-        "Overview of AWS IAM",
-        "User management in IAM",
-        "Roles and policies in IAM"
+        "High availability and fault tolerance",
+        "Decoupling mechanisms"
       ],
-      "why_included": "Critical gap identified: Lacks understanding of AWS IAM's role in managing user identities and permissions, confusing it with Amazon VPC.",
-      "priority": 2,
+      "why_included": "The learner scored 25.0% in this domain and confuses the role of AWS Elastic Load Balancer with AWS Route 53 (evidence: bd6b12fb-4894-44ac-a385-13ec43ddc46d).",
+      "priority": 3,
       "estimated_hours": 2.0,
       "prerequisites": []
     },
     {
-      "item_id": "cd79ac6c-4eb5-475f-b751-e9c22dd6f00c",
-      "domain_id": "design-secure-applications-and-architectures",
-      "title": "Data Protection Strategies in Amazon S3",
-      "objective": "Learn about data protection methods in Amazon S3, including encryption and access settings.",
+      "item_id": "d8a8a2a8-ba5d-4157-a4f3-eb0a158c10f6",
+      "domain_id": "design-resilient-architectures",
+      "title": "Understand Load Balancer Health Checks vs. RDS Multi-AZ",
+      "objective": "Explain the function of AWS Elastic Load Balancer health checks compared to Amazon RDS Multi-AZ deployments.",
       "subtopics": [
-        "S3 encryption options",
-        "Access control settings",
-        "Best practices for data protection"
+        "High availability and fault tolerance",
+        "Decoupling mechanisms"
       ],
-      "why_included": "Moderate gap identified: Misunderstands data protection strategies in S3, confusing encryption with public access settings.",
-      "priority": 3,
+      "why_included": "The learner scored 25.0% in this domain and misunderstands the function of AWS Elastic Load Balancer health checks versus RDS Multi-AZ (evidence: 4928467a-a387-4bd4-830b-6e27a3e2eff3).",
+      "priority": 4,
       "estimated_hours": 2.0,
-      "prerequisites": [
-        "cd7b02c8-9e11-4e65-8fa2-4cc14f79a292"
-      ]
+      "prerequisites": []
     },
     {
-      "item_id": "d6436e78-5730-4a01-977c-a2899caca9e3",
-      "domain_id": "design-cost-optimized-architectures",
-      "title": "Cost Optimization Strategies in AWS",
-      "objective": "Explore effective cost optimization strategies and debunk myths about provisioning at maximum capacity.",
+      "item_id": "151fa45f-fc17-49af-8776-718d0e87a60d",
+      "domain_id": "design-resilient-architectures",
+      "title": "Differentiate AWS Auto Scaling and Elastic Beanstalk",
+      "objective": "Clarify the differences between AWS Auto Scaling and AWS Elastic Beanstalk for resource management.",
       "subtopics": [
-        "Understanding cost optimization",
-        "Provisioning strategies",
-        "Monitoring and controlling costs"
+        "Elasticity and scalability",
+        "Decoupling mechanisms"
       ],
-      "why_included": "Moderate gap identified: Confuses cost optimization strategies, incorrectly believing that provisioning at maximum capacity minimizes costs.",
-      "priority": 4,
+      "why_included": "The learner scored 25.0% in this domain and confuses AWS Auto Scaling with AWS Elastic Beanstalk (evidence: 1109ab56-fba6-4230-871c-a315449a0aeb).",
+      "priority": 5,
+      "estimated_hours": 2.0,
+      "prerequisites": []
+    },
+    {
+      "item_id": "ee434134-4fb0-46d8-8663-a0a0331b5bbf",
+      "domain_id": "design-high-performing-architectures",
+      "title": "Clarify Caching Strategies: ElastiCache vs. S3",
+      "objective": "Differentiate between the use of Amazon ElastiCache and Amazon S3 for caching data.",
+      "subtopics": [
+        "Caching strategies",
+        "Performance optimization techniques"
+      ],
+      "why_included": "The learner scored 33.3% in this domain and confuses Amazon ElastiCache with Amazon S3 in caching contexts (evidence: 7df558a1-fcdc-4cad-9966-d39e12e31b06).",
+      "priority": 6,
+      "estimated_hours": 2.0,
+      "prerequisites": []
+    },
+    {
+      "item_id": "fde840ac-d010-4c1d-92c5-45e54be8866c",
+      "domain_id": "design-high-performing-architectures",
+      "title": "Optimize Database Query Performance",
+      "objective": "Identify the best approach for optimizing slow database queries and the role of indexing.",
+      "subtopics": [
+        "Database optimization",
+        "Performance optimization techniques"
+      ],
+      "why_included": "The learner scored 33.3% in this domain and misunderstands the best approach for optimizing slow database queries (evidence: cdb7bee0-fae4-44f0-9ffc-d46991b3b8b5).",
+      "priority": 7,
       "estimated_hours": 2.0,
       "prerequisites": []
     }
   ],
   "skipped_domains": [
     {
-      "domain_id": "design-high-performing-architectures",
-      "reason": "The learner demonstrates a developing understanding with a score of 66.7% and successfully identifies key concepts related to high-performing architectures."
-    },
-    {
-      "domain_id": "design-cost-optimized-architectures",
-      "reason": "The learner has a developing understanding with a score of 50.0%, allowing for a light review but focusing on critical gaps in other domains."
+      "domain_id": "design-secure-applications-and-architectures",
+      "reason": "The learner demonstrated a developing understanding of this domain, scoring 66.7%, and therefore requires no additional study at this time."
     }
   ],
-  "total_estimated_hours": 9.0,
+  "total_estimated_hours": 17.0,
   "weekly_plan": [
     {
       "week_number": 1,
-      "focus": "Elastic Load Balancing and S3",
+      "focus": "Cost Optimization Strategies",
       "item_ids": [
-        "152f8018-e145-4035-95b2-e64953864b49"
+        "a8701d67-076c-4c80-83c8-8fa93234786e",
+        "7240e788-432f-45e5-aecf-de104a006ef5"
       ],
-      "estimated_hours": 3.0
+      "estimated_hours": 7.0
     },
     {
       "week_number": 2,
-      "focus": "AWS IAM Fundamentals",
+      "focus": "Resilient Architectures: Load Balancing",
       "item_ids": [
-        "cd7b02c8-9e11-4e65-8fa2-4cc14f79a292"
+        "fa18712b-8b14-4f2b-839f-83c90e8ee7ae",
+        "d8a8a2a8-ba5d-4157-a4f3-eb0a158c10f6",
+        "151fa45f-fc17-49af-8776-718d0e87a60d"
       ],
-      "estimated_hours": 2.0
+      "estimated_hours": 6.0
     },
     {
       "week_number": 3,
-      "focus": "Data Protection in S3",
+      "focus": "High-Performing Architectures: Caching and Optimization",
       "item_ids": [
-        "cd79ac6c-4eb5-475f-b751-e9c22dd6f00c"
+        "ee434134-4fb0-46d8-8663-a0a0331b5bbf",
+        "fde840ac-d010-4c1d-92c5-45e54be8866c"
       ],
-      "estimated_hours": 2.0
+      "estimated_hours": 4.0
     },
     {
       "week_number": 4,
-      "focus": "Cost Optimization Strategies",
+      "focus": "Review and Practice",
       "item_ids": [
-        "d6436e78-5730-4a01-977c-a2899caca9e3"
+        "a8701d67-076c-4c80-83c8-8fa93234786e",
+        "7240e788-432f-45e5-aecf-de104a006ef5",
+        "fa18712b-8b14-4f2b-839f-83c90e8ee7ae",
+        "d8a8a2a8-ba5d-4157-a4f3-eb0a158c10f6",
+        "151fa45f-fc17-49af-8776-718d0e87a60d",
+        "ee434134-4fb0-46d8-8663-a0a0331b5bbf",
+        "fde840ac-d010-4c1d-92c5-45e54be8866c"
       ],
-      "estimated_hours": 2.0
+      "estimated_hours": 5.0
     },
     {
       "week_number": 5,
-      "focus": "Review and Reinforcement",
+      "focus": "Reinforcement and Practice",
       "item_ids": [
-        "152f8018-e145-4035-95b2-e64953864b49",
-        "cd7b02c8-9e11-4e65-8fa2-4cc14f79a292",
-        "cd79ac6c-4eb5-475f-b751-e9c22dd6f00c",
-        "d6436e78-5730-4a01-977c-a2899caca9e3"
+        "a8701d67-076c-4c80-83c8-8fa93234786e",
+        "7240e788-432f-45e5-aecf-de104a006ef5",
+        "fa18712b-8b14-4f2b-839f-83c90e8ee7ae",
+        "d8a8a2a8-ba5d-4157-a4f3-eb0a158c10f6",
+        "151fa45f-fc17-49af-8776-718d0e87a60d",
+        "ee434134-4fb0-46d8-8663-a0a0331b5bbf",
+        "fde840ac-d010-4c1d-92c5-45e54be8866c"
       ],
-      "estimated_hours": 3.0
+      "estimated_hours": 5.0
     },
     {
       "week_number": 6,
-      "focus": "Practice Exam and Identify Weak Areas",
-      "item_ids": [],
-      "estimated_hours": 2.0
-    },
-    {
-      "week_number": 7,
-      "focus": "Focus on High-Performing Architectures",
-      "item_ids": [],
-      "estimated_hours": 2.0
-    },
-    {
-      "week_number": 8,
-      "focus": "Focus on Cost-Optimized Architectures",
-      "item_ids": [],
-      "estimated_hours": 2.0
-    },
-    {
-      "week_number": 9,
-      "focus": "Final Review of All Domains",
+      "focus": "Final Review",
       "item_ids": [],
       "estimated_hours": 3.0
-    },
-    {
-      "week_number": 10,
-      "focus": "Final Exam Preparation",
-      "item_ids": [],
-      "estimated_hours": 2.0
     }
   ],
-  "guidance_summary": "Focus on addressing critical gaps in resilient and secure architectures, as these foundational concepts are essential for success in the exam. Engage in hands-on practice and assessments to reinforce learning and identify any remaining weaknesses. Use the final weeks for comprehensive reviews and practice exams to build confidence.",
-  "created_at": "2026-07-13T00:48:49.749323Z"
+  "guidance_summary": "Focus your studies primarily on understanding cost optimization strategies and the distinctions between key AWS services in resilient architectures. Review the concepts of caching and database performance optimization to solidify your knowledge. Use the final review week to practice and reinforce your understanding before the exam.",
+  "created_at": "2026-07-30T21:51:01.792441Z"
 }
