@@ -5,17 +5,21 @@ from llm_engine.schemas import (
     Course,
     DomainScore,
     ExamDomain,
+    FillInBlankQuestion,
+    FullTextQuestion,
     GradedAssessment,
     KnowledgeGap,
     Lesson,
     LessonExample,
     LessonPracticeQuestion,
     LessonSection,
-    Question,
+    MultiAnswerQuestion,
     QuestionOption,
     QuestionResult,
+    QuestionTypeWeight,
     Roadmap,
     RoadmapItem,
+    SingleAnswerQuestion,
     SkippedDomain,
     StudyWeek,
     Syllabus,
@@ -39,6 +43,7 @@ def _syllabus() -> Syllabus:
                 key_topics=["IAM", "network boundaries"],
             )
         ],
+        question_type_mix=[QuestionTypeWeight(question_type="single_answer", weight_percent=100.0)],
         source_note="Official SAA-C03 blueprint.",
         created_at=_NOW,
     )
@@ -52,7 +57,7 @@ def _assessment(syllabus: Syllabus) -> Assessment:
         certification=syllabus.certification,
         domains=syllabus.domains,
         questions=[
-            Question(
+            SingleAnswerQuestion(
                 question_id="7b0d4a4e-0000-4000-8000-000000000003",
                 domain_id="design-secure-architectures",
                 difficulty="medium",
@@ -65,9 +70,39 @@ def _assessment(syllabus: Syllabus) -> Assessment:
                 ],
                 correct_option_id="A",
                 explanation="IAM roles with MFA minimize standing privilege; the rest weaken security.",
-            )
+            ),
+            MultiAnswerQuestion(
+                question_id="7b0d4a4e-0000-4000-8000-000000000006",
+                domain_id="design-secure-architectures",
+                difficulty="hard",
+                stem="Select all that apply: which reduce blast radius of a compromised credential?",
+                options=[
+                    QuestionOption(option_id="A", text="Short-lived STS tokens"),
+                    QuestionOption(option_id="B", text="Least-privilege IAM policies"),
+                    QuestionOption(option_id="C", text="Long-lived root access keys"),
+                    QuestionOption(option_id="D", text="Publicly readable S3 buckets"),
+                ],
+                correct_option_ids=["A", "B"],
+                explanation="A and B limit exposure window and scope; C and D increase blast radius.",
+            ),
+            FillInBlankQuestion(
+                question_id="7b0d4a4e-0000-4000-8000-000000000007",
+                domain_id="design-secure-architectures",
+                difficulty="easy",
+                stem="Which AWS service issues temporary security credentials?",
+                accepted_answers=["STS", "AWS STS", "Security Token Service"],
+                explanation="AWS STS issues short-lived credentials for federated/assumed-role access.",
+            ),
+            FullTextQuestion(
+                question_id="7b0d4a4e-0000-4000-8000-000000000008",
+                domain_id="design-secure-architectures",
+                difficulty="hard",
+                stem="Explain how permission boundaries interact with identity policies.",
+                rubric="Must state boundaries cap max permissions, and effective permission is the intersection.",
+                explanation="Boundaries do not grant access on their own; they only limit an identity's ceiling.",
+            ),
         ],
-        num_questions=1,
+        num_questions=4,
         created_at=_NOW,
     )
 
@@ -83,7 +118,9 @@ def test_all_domain_models_round_trip_json() -> None:
             QuestionResult(
                 question_id=assessment.questions[0].question_id,
                 domain_id="design-secure-architectures",
+                question_type="single_answer",
                 correct=True,
+                score_percent=100.0,
                 selected_option_id="A",
                 correct_option_id="A",
                 explanation=assessment.questions[0].explanation,
@@ -95,7 +132,7 @@ def test_all_domain_models_round_trip_json() -> None:
                 domain_name="Design Secure Architectures",
                 weight_percent=30.0,
                 questions_total=1,
-                questions_correct=1,
+                questions_correct=1.0,
                 score_percent=100.0,
                 proficiency="proficient",
             )
@@ -157,6 +194,22 @@ def test_all_domain_models_round_trip_json() -> None:
     for instance in (syllabus, assessment, graded, roadmap, user_answer):
         restored = type(instance).model_validate_json(instance.model_dump_json())
         assert restored == instance
+
+
+def test_question_union_round_trips_each_type() -> None:
+    syllabus = _syllabus()
+    assessment = _assessment(syllabus)
+    restored = Assessment.model_validate_json(assessment.model_dump_json())
+    assert [q.question_type for q in restored.questions] == [
+        "single_answer",
+        "multi_answer",
+        "fill_in_blank",
+        "full_text",
+    ]
+    assert isinstance(restored.questions[0], SingleAnswerQuestion)
+    assert isinstance(restored.questions[1], MultiAnswerQuestion)
+    assert isinstance(restored.questions[2], FillInBlankQuestion)
+    assert isinstance(restored.questions[3], FullTextQuestion)
 
 
 def test_roadmap_without_exam_date_round_trips() -> None:

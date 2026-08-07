@@ -208,6 +208,10 @@ syllabus = generate_syllabus("Cloud Architecture", "AWS Solutions Architect Asso
       "key_topics": ["IAM", "KMS", "VPC security"]
     }
   ],
+  "question_type_mix": [
+    {"question_type": "single_answer", "weight_percent": 90.0},
+    {"question_type": "multi_answer", "weight_percent": 10.0}
+  ],
   "source_note": "Based on the official SAA-C03 exam guide.",
   "created_at": "2026-07-11T19:00:00Z"
 }
@@ -230,6 +234,7 @@ assessment = generate_assessment(syllabus, num_questions=12)
   "domains": [ … syllabus domain snapshot … ],
   "questions": [
     {
+      "question_type": "single_answer",
       "question_id": "c44d…",
       "domain_id": "design-secure-architectures",
       "difficulty": "medium",
@@ -249,7 +254,15 @@ assessment = generate_assessment(syllabus, num_questions=12)
 }
 ```
 
-Questions are distributed across domains proportional to exam weight
+Each question is one of four types, tagged by `question_type`:
+`single_answer` (shape above), `multi_answer` (`options` +
+`correct_option_ids: list[str]`, 2+ correct), `fill_in_blank`
+(`accepted_answers: list[str]`, no `options`), `full_text` (`rubric: str`,
+no `options`). The mix of types is inferred per-certification during
+syllabus generation (`Syllabus.question_type_mix`) — most certifications
+are 100% `single_answer`; some mix in the others.
+
+Questions are distributed across domains and question types proportional to exam weight
 (computed in Python, not by the model).
 
 ### grade_assessment(assessment, answers) -> GradedAssessment
@@ -257,6 +270,8 @@ Questions are distributed across domains proportional to exam weight
 ```python
 answers = [UserAnswer(question_id="c44d…", selected_option_id="B"),
            UserAnswer(question_id="d55e…", selected_option_id=None)]  # None = skipped
+# multi_answer: UserAnswer(question_id="…", selected_option_ids=["A", "C"])
+# fill_in_blank / full_text: UserAnswer(question_id="…", text_answer="…")
 graded = grade_assessment(assessment, answers)
 ```
 
@@ -265,12 +280,12 @@ graded = grade_assessment(assessment, answers)
   "assessment_id": "9a1b…",
   "overall_score_percent": 58.3,
   "question_results": [
-    {"question_id": "c44d…", "domain_id": "…", "correct": true,
-     "selected_option_id": "B", "correct_option_id": "B", "explanation": "…"}
+    {"question_id": "c44d…", "domain_id": "…", "question_type": "single_answer", "correct": true,
+     "score_percent": 100.0, "selected_option_id": "B", "correct_option_id": "B", "explanation": "…"}
   ],
   "domain_scores": [
     {"domain_id": "design-secure-architectures", "domain_name": "…",
-     "weight_percent": 30.0, "questions_total": 4, "questions_correct": 2,
+     "weight_percent": 30.0, "questions_total": 4, "questions_correct": 2.0,
      "score_percent": 50.0, "proficiency": "developing"}
   ],
   "gaps": [
@@ -283,10 +298,17 @@ graded = grade_assessment(assessment, answers)
 }
 ```
 
-Every numeric score is computed deterministically in Python against the
-stored answer key; the LLM contributes only the qualitative diagnosis.
-Skipped and missing answers count as incorrect (`selected_option_id`
-stays null so you can flag them). Unknown `question_id`s in `answers`
+`single_answer`/`multi_answer` scores are computed deterministically in
+Python (multi-answer is all-or-nothing: the selected set must exactly
+match the correct set). `fill_in_blank`/`full_text` answers can't be
+graded by exact match, so the LLM scores them in the same call that
+produces the qualitative diagnosis — `fill_in_blank` is binary (0 or
+100), `full_text` gets partial credit (0-100). `DomainScore.score_percent`
+is the mean of `score_percent` across a domain's questions regardless of
+type; `questions_correct` is the fractional-equivalent count
+(`sum(score_percent)/100`), so it's no longer always a whole number once
+a domain contains a partially-scored `full_text` answer. Skipped and
+missing answers count as incorrect. Unknown `question_id`s in `answers`
 raise `ValueError`. Proficiency thresholds: <50 weak, 50–79 developing,
 ≥80 proficient (env-configurable).
 
@@ -407,9 +429,12 @@ same `Lesson` shape shown above. One LLM call.
    restores with `Model.model_validate_json()` — store them in MySQL JSON
    columns keyed by their `*_id` fields (all UUIDs generated in code, safe
    to key on).
-3. **SECURITY — answer key.** `Assessment` contains `correct_option_id`
-   and `explanation` for every question. You MUST strip these before
-   sending questions to the frontend. When grading, do NOT trust an
+3. **SECURITY — answer key.** Every question in `Assessment` carries
+   `explanation` plus a type-specific answer-revealing field:
+   `correct_option_id` (single_answer), `correct_option_ids`
+   (multi_answer), `accepted_answers` (fill_in_blank), or `rubric`
+   (full_text). You MUST strip all of these before sending questions to
+   the frontend. When grading, do NOT trust an
    assessment sent back by the client — load the stored server-side
    `Assessment` and pass that to `grade_assessment`. This applies to
    `Assessment` only: `Lesson.practice_questions` are study material and

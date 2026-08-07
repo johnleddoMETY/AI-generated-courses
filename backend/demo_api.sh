@@ -53,6 +53,10 @@ ASSESSMENT_ID=$(jq -r '.assessment_id' /tmp/demo_assessment.json)
 Q1=$(jq -r '.questions[0].question_id' /tmp/demo_assessment.json)
 Q2=$(jq -r '.questions[1].question_id' /tmp/demo_assessment.json)
 
+step "2b. Fetch that same assessment back by ID (still no answer key — proves it either way)"
+curl -s "$BASE_URL/assessment/$ASSESSMENT_ID/" -H "$AUTH_HEADER" \
+  | jq '{assessment_id, first_question_has_answer_key: (.questions[0] | has("correct_option_id"))}'
+
 step "3. Grade the assessment (server re-loads the real answer key — client never had it)"
 curl -s "$BASE_URL/assessment/$ASSESSMENT_ID/grade/" -X POST -H "Content-Type: application/json" -H "$AUTH_HEADER" \
   -d "{\"answers\": [{\"question_id\": \"$Q1\", \"selected_option_id\": \"A\"}, {\"question_id\": \"$Q2\", \"selected_option_id\": null}]}" \
@@ -64,6 +68,24 @@ curl -s "$BASE_URL/assessment/$ASSESSMENT_ID/roadmap/" -X POST -H "Content-Type:
   -d '{}' \
   -o /tmp/demo_roadmap.json
 jq '{total_estimated_hours, skipped_domains, items: [.items[] | {title, priority, estimated_hours}]}' /tmp/demo_roadmap.json
+ROADMAP_ID=$(jq -r '.roadmap_id' /tmp/demo_roadmap.json)
+ITEM_ID=$(jq -r '.items[0].item_id' /tmp/demo_roadmap.json)
+
+step "5. Generate the full course (one lesson per roadmap item — slowest step, real LLM calls)"
+curl -s "$BASE_URL/roadmap/$ROADMAP_ID/course/" -X POST -H "Content-Type: application/json" -H "$AUTH_HEADER" \
+  -d '{}' \
+  -o /tmp/demo_course.json
+jq '{course_id, lesson_count: (.lessons | length), lessons: [.lessons[] | {title, summary}]}' /tmp/demo_course.json
+COURSE_ID=$(jq -r '.course_id' /tmp/demo_course.json)
+
+step "5b. Fetch that same course back by ID"
+curl -s "$BASE_URL/course/$COURSE_ID/" -H "$AUTH_HEADER" \
+  | jq '{course_id, total_estimated_hours}'
+
+step "6. Regenerate just the first lesson (cheaper than redoing the whole course)"
+curl -s "$BASE_URL/course/$COURSE_ID/lesson/$ITEM_ID/regenerate/" -X POST -H "Content-Type: application/json" -H "$AUTH_HEADER" \
+  -d '{}' \
+  | jq '{lesson_id, title, summary}'
 
 step "Done — cleaning up temp files"
-rm -f /tmp/demo_syllabus.json /tmp/demo_assessment.json /tmp/demo_graded.json /tmp/demo_roadmap.json
+rm -f /tmp/demo_syllabus.json /tmp/demo_assessment.json /tmp/demo_graded.json /tmp/demo_roadmap.json /tmp/demo_course.json

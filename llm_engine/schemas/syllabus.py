@@ -8,8 +8,18 @@ models services hand to callers, with code-assigned slug IDs and UUIDs.
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
+
+QuestionType = Literal["single_answer", "multi_answer", "fill_in_blank", "full_text"]
+
+
+class QuestionTypeWeight(BaseModel):
+    """One question-type's share of the exam, e.g. 80% single-answer, 20% multi-answer."""
+
+    question_type: QuestionType
+    weight_percent: float
 
 
 class LLMExamDomain(BaseModel):
@@ -25,6 +35,7 @@ class SyllabusLLMResponse(BaseModel):
 
     exam_code: str | None
     domains: list[LLMExamDomain]
+    question_type_mix: list[QuestionTypeWeight]
     source_note: str
 
 
@@ -45,5 +56,6 @@ class Syllabus(BaseModel):
     certification: str
     exam_code: str | None
     domains: list[ExamDomain]
+    question_type_mix: list[QuestionTypeWeight]
     source_note: str
     created_at: datetime

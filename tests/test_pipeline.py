@@ -8,6 +8,7 @@ from llm_engine.schemas import (
     ExamDomain,
     GradedAssessment,
     Lesson,
+    QuestionTypeWeight,
     Roadmap,
     RoadmapItem,
     Syllabus,
@@ -22,6 +23,7 @@ def _syllabus() -> Syllabus:
         certification="Test Cert",
         exam_code="TEST-001",
         domains=[],
+        question_type_mix=[QuestionTypeWeight(question_type="single_answer", weight_percent=100.0)],
         source_note="Test",
         created_at=datetime(2026, 7, 11, tzinfo=timezone.utc),
     )

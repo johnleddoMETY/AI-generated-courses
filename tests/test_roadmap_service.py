@@ -9,6 +9,7 @@ from llm_engine.schemas import (
     LLMRoadmapItem,
     LLMSkippedDomain,
     LLMStudyWeek,
+    QuestionTypeWeight,
     RoadmapLLMResponse,
     Syllabus,
 )
@@ -25,6 +26,7 @@ def _syllabus() -> Syllabus:
             ExamDomain(domain_id="domain-a", name="Domain A", weight_percent=60.0, key_topics=["a"]),
             ExamDomain(domain_id="domain-b", name="Domain B", weight_percent=40.0, key_topics=["b"]),
         ],
+        question_type_mix=[QuestionTypeWeight(question_type="single_answer", weight_percent=100.0)],
         source_note="Test syllabus.",
         created_at=datetime(2026, 7, 11, tzinfo=timezone.utc),
     )

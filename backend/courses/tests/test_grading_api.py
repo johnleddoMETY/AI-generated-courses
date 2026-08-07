@@ -85,3 +85,35 @@ def test_grade_uses_server_stored_assessment_not_client_payload(
     called_assessment = mock_grade.call_args.args[0]
     assert called_assessment.assessment_id == sample_assessment.assessment_id
     assert called_assessment.questions[0].correct_option_id == "A"
+
+
+@pytest.mark.django_db
+def test_grade_accepts_answers_for_every_question_type(
+    api_client, sample_syllabus, sample_assessment_all_types, sample_graded_assessment, monkeypatch
+):
+    """selected_option_ids (multi_answer) and text_answer (fill_in_blank /
+    full_text) must reach grade_assessment as real UserAnswer fields, not
+    silently drop to all-None (== skipped)."""
+    _make_assessment_row(sample_syllabus, sample_assessment_all_types)
+    mock_grade = MagicMock(return_value=sample_graded_assessment)
+    monkeypatch.setattr("courses.views.grade_assessment", mock_grade)
+
+    response = api_client.post(
+        f"/api/assessment/{sample_assessment_all_types.assessment_id}/grade/",
+        {
+            "answers": [
+                {"question_id": "q-single", "selected_option_id": "A"},
+                {"question_id": "q-multi", "selected_option_ids": ["A", "B"]},
+                {"question_id": "q-fill", "text_answer": "IAM"},
+                {"question_id": "q-text", "text_answer": "Grant only the minimum permissions needed."},
+            ]
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201
+    answers_by_id = {a.question_id: a for a in mock_grade.call_args.args[1]}
+    assert answers_by_id["q-single"].selected_option_id == "A"
+    assert answers_by_id["q-multi"].selected_option_ids == ["A", "B"]
+    assert answers_by_id["q-fill"].text_answer == "IAM"
+    assert answers_by_id["q-text"].text_answer == "Grant only the minimum permissions needed."

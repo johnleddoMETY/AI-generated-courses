@@ -27,6 +27,14 @@ Rules:
 - Never invent exam codes. Set exam_code only if you are confident it is the
   real code for this certification; otherwise set it to null.
 - Domain weights must be positive numbers that sum to approximately 100.
+- Also determine this certification's real question-type mix: what
+  percentage of exam questions are single-correct-answer multiple choice
+  ("single_answer"), multi-select "choose all that apply" ("multi_answer"),
+  fill-in-the-blank short answer ("fill_in_blank"), or full free-text/essay
+  response ("full_text"). Most certification exams are 100% single_answer —
+  only include the other types if you know this exam genuinely uses them.
+  The weight_percent values across all four types must sum to approximately
+  100.
 - Give each domain 3-8 key_topics, specific enough that exam questions could
   be written from them.
 - In source_note, state in one or two sentences how confident you are and
@@ -45,6 +53,10 @@ Return a JSON object with:
 - exam_code: the official exam code string, or null if not confidently known
 - domains: a list of objects, each with name (string), weight_percent
   (number), and key_topics (list of strings)
+- question_type_mix: a list of objects, each with question_type
+  ("single_answer" | "multi_answer" | "fill_in_blank" | "full_text") and
+  weight_percent (number); include only the types this exam actually uses,
+  and the values should sum to ~100
 - source_note: one or two sentences on confidence and grounding
 """
 

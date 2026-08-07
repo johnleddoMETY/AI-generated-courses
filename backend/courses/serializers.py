@@ -17,12 +17,26 @@ from rest_framework import serializers
 OptionID = ("A", "B", "C", "D")
 
 
+# Answer-revealing fields across all four question types (single_answer,
+# multi_answer, fill_in_blank, full_text) — see llm_engine/schemas/assessment.py.
+# explanation is common to all types; the rest are type-specific, but a
+# blanket pop() per question is simpler than branching on question_type
+# and just as correct, since pop(..., None) is a no-op for absent keys.
+_ANSWER_REVEALING_FIELDS = (
+    "correct_option_id",
+    "correct_option_ids",
+    "accepted_answers",
+    "rubric",
+    "explanation",
+)
+
+
 def serialize_assessment_public(payload: dict[str, Any]) -> dict[str, Any]:
-    """Return an assessment payload with correct_option_id/explanation stripped from every question."""
+    """Return an assessment payload with every answer-revealing field stripped from every question."""
     stripped = copy.deepcopy(payload)
     for question in stripped.get("questions", []):
-        question.pop("correct_option_id", None)
-        question.pop("explanation", None)
+        for field in _ANSWER_REVEALING_FIELDS:
+            question.pop(field, None)
     return stripped
 
 
@@ -37,8 +51,18 @@ class AssessmentCreateRequestSerializer(serializers.Serializer):
 
 
 class UserAnswerRequestSerializer(serializers.Serializer):
+    """Exactly one of the three answer fields should be set, matching the
+    question's question_type: selected_option_id (single_answer),
+    selected_option_ids (multi_answer), or text_answer (fill_in_blank /
+    full_text). All-None means skipped — see llm_engine's UserAnswer.
+    """
+
     question_id = serializers.CharField()
-    selected_option_id = serializers.ChoiceField(choices=OptionID, allow_null=True)
+    selected_option_id = serializers.ChoiceField(choices=OptionID, required=False, allow_null=True, default=None)
+    selected_option_ids = serializers.ListField(
+        child=serializers.ChoiceField(choices=OptionID), required=False, allow_null=True, default=None
+    )
+    text_answer = serializers.CharField(required=False, allow_null=True, allow_blank=True, default=None)
 
 
 class GradeRequestSerializer(serializers.Serializer):
